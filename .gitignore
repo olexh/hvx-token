@@ -1,0 +1,24 @@
+# dependencies / build
+node_modules/
+artifacts/
+cache/
+dist/
+types/
+coverage/
+
+# secrets and local keys
+.env
+.env.*
+!.env.example
+.signers.*.json
+.demo-wallet.*.json
+
+# local-only outputs
+deployments/localhost.json
+deployments/hardhat*.json
+safe-batch*.json
+
+# editor / tooling
+.vscode/
+.idea/
+.DS_Store

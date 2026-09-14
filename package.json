@@ -1,0 +1,32 @@
+{
+  "name": "hvx-token",
+  "version": "1.0.0",
+  "scripts": {
+    "compile": "hardhat compile",
+    "test": "hardhat test",
+    "clean": "hardhat clean",
+    "coverage": "hardhat test --coverage",
+    "slither": "slither contracts/HVXToken.sol --fail-pedantic && slither contracts/HVXVestingVault.sol --fail-pedantic",
+    "check-erc20": "slither-check-erc contracts/HVXToken.sol HVXToken --solc-remaps @openzeppelin=node_modules/@openzeppelin"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox-mocha-ethers": "^3.0.7",
+    "@safe-global/protocol-kit": "^8.0.7",
+    "@types/chai": "^5.2.3",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "^22.20.2",
+    "dotenv": "^17.4.2",
+    "forge-std": "github:foundry-rs/forge-std#v1.9.7",
+    "hardhat": "^3.16.0",
+    "typescript": "~5.8"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^5.6.1"
+  },
+  "type": "module",
+  "private": true
+}
