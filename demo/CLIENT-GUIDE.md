@@ -1,27 +1,31 @@
-# HiveX (HVX) — testnet trial guide
+# HiveX (HVX) testnet guide
 
-Everything below runs on BNB Smart Chain **Testnet**. Tokens have no value; this is a rehearsal of the real thing.
+Use the demo on BNB Smart Chain Testnet to try transfers, burns and vesting releases. Test tokens have no monetary value.
 
 ## What you need
+
 - Chrome, Firefox or Brave with the [MetaMask](https://metamask.io) extension.
-- The demo wallet seed phrase we sent you separately (12 words). It already holds test HVX and a little tBNB for gas.
+- The demo wallet's 12-word seed phrase, supplied separately. The wallet is funded with test HVX and tBNB for gas.
 - The demo page link.
 
 ## Steps
-1. Open MetaMask → account menu → *Import wallet* / *Add account* → paste the 12 words.
+
+1. Import the supplied 12-word demo seed phrase into MetaMask.
 2. Open the demo page. Click **Connect wallet**, approve the connection and the network switch to *BNB Smart Chain Testnet*.
-3. Click **Add HVX to MetaMask**. Your HVX balance now shows inside MetaMask as well.
-4. **Transfer**: enter any address and an amount, confirm in MetaMask. The balance updates on the page within a few seconds; click the address to see the transaction on BscScan.
-5. **Burn**: enter an amount, confirm. *Total burned* goes up, *Current supply* goes down. This is exactly how the foundation's staged burns will look, just from the treasury multisig instead of your wallet.
-6. **Vesting**: scroll to the schedule cards. The ones marked *(you)* belong to the demo wallet. When *Releasable now* is above zero, click **Release**. Tokens move from the vault into your wallet. Cards in *cliff* release nothing yet, no matter who clicks.
-7. Everything on the page is read live from the blockchain. Open any address on BscScan to verify independently.
+3. Click **Add to MetaMask** to show your HVX balance in the wallet.
+4. Click **Send**, enter a recipient address and amount, then click **Send HVX** and confirm in MetaMask. The page updates after confirmation. Open the transaction link under **Your activity** to view it on BscScan.
+5. Click **Burn**, enter an amount, then click **Burn HVX** and confirm. **Burned** increases and **Total supply** decreases by that amount. The foundation uses the same function for staged burns from its Safe.
+6. Under **Vesting schedules**, rows marked **yours** belong to the connected wallet. Click **Release** when a row has tokens available. Tokens go to that schedule's beneficiary, even if someone else triggers the release. During a cliff, only the initial unlock is claimable; if it is zero or already released, there is nothing to release.
+7. Open any contract or wallet address on BscScan to check the balances and transactions shown on the page.
 
 ## What to look for
-- Total supply is fixed. Nothing on the page, in the wallet or in the contract can create tokens.
-- The foundation multisig needs 2 of 3 signers for anything. It cannot touch your balance.
+
+- The initial supply was minted at deployment. Burns reduce the current supply; no more tokens can be minted.
+- The testnet foundation Safe requires 2 of 3 signers for its transactions. It can spend your tokens only if you grant it an allowance.
 - Locked amounts, unlock dates and released amounts are public and match what the contract enforces.
 
 ## If something does not work
-- "Wrong network": click **Switch to BNB Testnet**.
-- "Insufficient funds for gas": the wallet needs tBNB. Ask us or use https://www.bnbchain.org/en/testnet-faucet.
-- Numbers look stale: wait 15 seconds, the page refreshes itself.
+
+- Wrong network: click **Connect wallet** and approve the switch to BNB Smart Chain Testnet.
+- Insufficient funds for gas: the wallet needs tBNB. Ask the demo contact or use the [BNB Chain testnet faucet](https://www.bnbchain.org/en/testnet-faucet).
+- Stale balances: wait for the next refresh, which runs every 15 seconds.

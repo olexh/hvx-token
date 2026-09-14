@@ -1,8 +1,8 @@
 # HVXVestingVault
 
-Holds locked HVX and pays it out on fixed schedules. One vault, many schedules. Each schedule is written once and can never be edited. Owner is the foundation Safe (`Ownable2Step`).
+The vault holds HVX allocations and releases vested tokens to beneficiaries. Each schedule has a fixed allocation and vesting terms, but its beneficiary can transfer it to another address. The foundation Safe owns the vault through `Ownable2Step`.
 
-Setup for the snippets is in [README.md](README.md). Owner functions also show Safe Transaction Builder fields.
+See the [example setup](README.md#example-setup) for imports, contract instances and amount helpers. Owner functions also list Safe Transaction Builder fields.
 
 ## Schedule model
 
@@ -10,9 +10,9 @@ Setup for the snippets is in [README.md](README.md). Owner functions also show S
 struct Schedule {
     address beneficiary;      // receives released tokens
     string  label;            // "Team", "Marketing", ...
-    uint256 total;            // original allocation in wei, never changed
-    uint256 released;         // already paid out (wei)
-    uint64  start;            // TGE / unlock start, Unix seconds
+    uint256 total;            // original allocation in HVX base units, unchanged by revocation
+    uint256 released;         // already released, in HVX base units
+    uint64  start;            // initial unlock, Unix seconds
     uint64  cliffDuration;    // seconds after start with no further unlock
     uint64  vestingDuration;  // seconds of linear unlock after the cliff (0 = all at cliff end)
     uint64  revokedAt;        // 0 while active; time of revocation otherwise
@@ -22,28 +22,28 @@ struct Schedule {
 }
 ```
 
-Unlock curve, with `initial = total * initialUnlockBps / 10000`:
+Vesting follows this curve, with `initialUnlock = total * initialUnlockBps / 10000`. Amounts are rounded down to whole base units.
 
 | Time `t` | Vested |
 |---|---|
 | `t < start` | `0` |
-| `start ≤ t < start + cliff` | `initial` |
-| `start + cliff ≤ t < start + cliff + vesting` | `initial + (total − initial) × (t − start − cliff) / vesting` |
-| `t ≥ start + cliff + vesting` | `total` |
+| `start ≤ t < start + cliffDuration` | `initialUnlock` |
+| `start + cliffDuration ≤ t < start + cliffDuration + vestingDuration` | `initialUnlock + (total − initialUnlock) × (t − start − cliffDuration) / vestingDuration` |
+| `t ≥ start + cliffDuration + vestingDuration` | `total` |
 
-If the schedule was revoked, the curve is evaluated at `min(t, revokedAt)`. Queries for times before the revocation return what was vested back then; later times return the frozen value.
+When `vestingDuration` is zero, the remainder unlocks at the end of the cliff. An initial unlock remains claimable during the cliff.
 
-Recipes:
+After revocation, the curve is evaluated at `min(t, revokedAt)`. Queries for earlier timestamps preserve the vesting history; later timestamps return the amount vested at revocation.
+
+Example schedules use fixed durations, not calendar months. TGE means the token generation event at the configured `start`.
 
 | Allocation shape | `initialUnlockBps` | `cliffDuration` | `vestingDuration` |
 |---|---|---|---|
 | Liquid at TGE | `10000` | `0` | `0` |
-| 20% at TGE, rest linear 6 months | `2000` | `0` | `15552000` (180 d) |
-| 12-month cliff, then 24-month linear | `0` | `31536000` | `63072000` |
-| Hard lock 2 years, then 100% | `0` | `63072000` | `0` |
-| 5% TGE, 3-month cliff, 36-month linear | `500` | `7776000` | `94608000` |
-
----
+| 20% at TGE, rest linear over 180 days | `2000` | `0` | `15552000` (180 days) |
+| 365-day cliff, then 730-day linear vesting | `0` | `31536000` (365 days) | `63072000` (730 days) |
+| Locked for 730 days, then fully vested | `0` | `63072000` (730 days) | `0` |
+| 5% at TGE, 90-day cliff, 1,095-day linear vesting | `500` | `7776000` (90 days) | `94608000` (1,095 days) |
 
 ## Constructor
 
@@ -51,37 +51,35 @@ Recipes:
 constructor(IERC20 token_, address initialOwner)
 ```
 
-| Param | Meaning |
+| Parameter | Meaning |
 |---|---|
 | `token_` | HVX token address |
 | `initialOwner` | Foundation Safe. Only it can create schedules. |
 
-Reverts `ZeroAddress()` for a zero token, `OwnableInvalidOwner(0x0)` for a zero owner.
-
----
+Reverts with `ZeroAddress()` for a zero token address or `OwnableInvalidOwner(0x0)` for a zero owner address.
 
 ## Owner functions
 
-Caller must be `owner()`. Anyone else gets `OwnableUnauthorizedAccount(caller)`.
+Only `owner()` can call these functions, except `acceptOwnership()`, which requires `pendingOwner()`. Unauthorized calls revert with `OwnableUnauthorizedAccount(caller)`.
 
 ### `createSchedule(address beneficiary, string label, uint256 total, uint64 start, uint64 cliffDuration, uint64 vestingDuration, uint16 initialUnlockBps, bool revocable) → uint256 id`
 
-Creates a schedule and pulls `total` HVX from the owner into the vault. The owner must have approved the vault for at least `total` first.
+Creates a schedule and transfers `total` HVX from the owner into the vault. The owner must first approve the vault to spend at least `total`.
 
-| Param | Meaning | Rules |
+| Parameter | Meaning | Rules |
 |---|---|---|
 | `beneficiary` | Who receives the tokens | not `0x0`, not the vault, not the token |
 | `label` | Name shown on explorers and events | any string |
-| `total` | HVX in wei | `> 0` |
-| `start` | Unix seconds of the TGE unlock | may be in the past |
-| `cliffDuration` | Seconds | any |
-| `vestingDuration` | Seconds; `0` = remainder unlocks at cliff end | any |
+| `total` | Allocation in HVX base units | `> 0` |
+| `start` | Unix timestamp of the initial unlock | may be in the past |
+| `cliffDuration` | Seconds after start before the remaining tokens begin vesting | must fit the end-time check below |
+| `vestingDuration` | Seconds of linear vesting after the cliff; `0` unlocks the remainder at cliff end | must fit the end-time check below |
 | `initialUnlockBps` | Basis points unlocked at `start` | `0..10000` |
 | `revocable` | Owner may later call `revoke` | recommended `true` only for individual team grants |
 
-Returns the new `id` (sequential from 0). Emits `ScheduleCreated(id, beneficiary, label, total, start, cliffDuration, vestingDuration, initialUnlockBps, revocable)`, then `Transfer(owner, vault, total)` on the token.
+Returns the new schedule `id`, starting at 0. Emits `ScheduleCreated(id, beneficiary, label, total, start, cliffDuration, vestingDuration, initialUnlockBps, revocable)`, then `Transfer(owner, vault, total)` on the token.
 
-Reverts: `ZeroAddress`, `InvalidBeneficiary`, `ZeroAmount`, `InvalidSchedule` (bps > 10000 or `start + cliff + vesting` overflows `uint64`), `ERC20InsufficientAllowance` / `ERC20InsufficientBalance` from the token.
+Invalid inputs revert with `ZeroAddress`, `InvalidBeneficiary`, `ZeroAmount` or `InvalidSchedule`. The end-time check requires `start + cliffDuration + vestingDuration` to fit in `uint64`; `initialUnlockBps` must not exceed `10000`. The token can also revert with `ERC20InsufficientAllowance` or `ERC20InsufficientBalance` when funding the schedule.
 
 ```ts
 const DAY = 86400n;
@@ -105,15 +103,15 @@ Safe Transaction Builder (two transactions in one batch):
 
 ### `revoke(uint256 id)`
 
-Stops a schedule that was created with `revocable = true`. Tokens vested up to this block stay claimable by the beneficiary; the unvested remainder is transferred back to the owner. `revoked` and `revokedAt` are set; `total` keeps the original allocation. Nothing more ever vests.
+Stops vesting for a schedule created with `revocable = true`. Vested tokens that have not been released remain claimable; the unvested remainder returns to the owner. Sets `revoked` and `revokedAt` without changing the original `total`.
 
-| Param | Meaning |
+| Parameter | Meaning |
 |---|---|
-| `id` | Schedule id |
+| `id` | Schedule ID |
 
 Emits `ScheduleRevoked(id, vestedTotal, refunded)` and, if `refunded > 0`, `Transfer(vault, owner, refunded)`.
 
-Reverts `UnknownSchedule(id)`, `NotRevocable()`, `AlreadyRevoked()`.
+Reverts with `UnknownSchedule(id)`, `NotRevocable()` or `AlreadyRevoked()`.
 
 ```ts
 await (await vault.revoke(3n)).wait();
@@ -123,13 +121,13 @@ Safe: contract = vault, method `revoke`, `id` = `3`.
 
 ### `withdrawUnallocated(address to)`
 
-Sends HVX that sits in the vault but backs no schedule (see `unallocated()`) to `to`. Cannot touch committed tokens.
+Transfers all HVX not reserved for schedules to `to`. The amount is returned by `unallocated()`.
 
-| Param | Meaning |
+| Parameter | Meaning |
 |---|---|
 | `to` | Recipient, not `0x0` |
 
-Emits `UnallocatedWithdrawn(to, amount)`. Reverts `ZeroAddress()`, `ZeroAmount()` when there is nothing to withdraw.
+Emits `UnallocatedWithdrawn(to, amount)`. Reverts with `ZeroAddress()` for a zero recipient or `ZeroAmount()` when there is nothing to withdraw.
 
 ```ts
 if ((await vault.unallocated()) > 0n) await (await vault.withdrawUnallocated(safeAddress)).wait();
@@ -139,15 +137,15 @@ Safe: contract = vault, method `withdrawUnallocated`, `to` = Safe address.
 
 ### `recoverERC20(address otherToken, address to, uint256 amount)`
 
-Returns some other ERC-20 that was sent to the vault by mistake.
+Recovers ERC-20 tokens other than HVX that were sent to the vault by mistake.
 
-| Param | Meaning |
+| Parameter | Meaning |
 |---|---|
 | `otherToken` | Token contract, must not be HVX |
 | `to` | Recipient, not `0x0` |
-| `amount` | Wei of `otherToken` |
+| `amount` | Amount in `otherToken` base units; use that token's decimals |
 
-Reverts `CannotRecoverVaultToken()`, `ZeroAddress()`, `SafeERC20FailedOperation(token)` if the transfer fails.
+Reverts with `CannotRecoverVaultToken()` for HVX or `ZeroAddress()` for a zero recipient. Failed transfers can revert with `SafeERC20FailedOperation(token)` or an error from the other token.
 
 ```ts
 await (await vault.recoverERC20("0xUSDT", safeAddress, ethers.parseUnits("100", 18))).wait();
@@ -155,15 +153,15 @@ await (await vault.recoverERC20("0xUSDT", safeAddress, ethers.parseUnits("100", 
 
 ### `transferOwnership(address newOwner)`
 
-Starts a two-step handover. `newOwner` becomes `pendingOwner()`; nothing changes until they call `acceptOwnership`. Emits `OwnershipTransferStarted(owner, newOwner)`.
+Starts an ownership transfer by setting `pendingOwner()` to `newOwner`. The current owner keeps its permissions until the new owner calls `acceptOwnership()`. Emits `OwnershipTransferStarted(owner, newOwner)`.
 
-| Param | Meaning |
+| Parameter | Meaning |
 |---|---|
 | `newOwner` | Proposed owner, e.g. a new Safe |
 
 ### `acceptOwnership()`
 
-Called by `pendingOwner()`. Completes the handover, emits `OwnershipTransferred(old, new)`. Anyone else gets `OwnableUnauthorizedAccount`.
+The pending owner calls this to accept ownership. Clears `pendingOwner()` and emits `OwnershipTransferred(old, new)`. Other callers receive `OwnableUnauthorizedAccount`.
 
 ```ts
 // from the old Safe
@@ -174,65 +172,66 @@ await (await vault.connect(newSafeSigner).acceptOwnership()).wait();
 
 ### `renounceOwnership()`
 
-Sets `owner()` to `0x0` permanently. After this no schedule can be created or revoked and no stray tokens recovered; `release` and `changeBeneficiary` keep working forever. Use once all allocations exist and the foundation wants the vault provably immutable. Emits `OwnershipTransferred(owner, 0x0)`.
+Permanently sets `owner()` to `0x0`. Disables schedule creation, revocation, withdrawals and token recovery. `release` and `changeBeneficiary` remain available. Use after all allocations are funded if the foundation wants to give up these owner permissions. Emits `OwnershipTransferred(owner, 0x0)`.
 
-Safe: contract = vault, method `renounceOwnership`, no params. Irreversible.
+Safe: contract = vault, method `renounceOwnership`, no parameters. This cannot be undone.
 
----
-
-## Permissionless functions
+## Releases and beneficiary transfers
 
 ### `release(uint256 id)`
 
-Pays everything vested and not yet released to the schedule's beneficiary. Anyone may call; the caller never receives tokens.
+Transfers all vested, unreleased tokens to the schedule's beneficiary. Anyone may call, including the beneficiary. The caller receives the tokens only if they are the beneficiary.
 
-| Param | Meaning |
+| Parameter | Meaning |
 |---|---|
-| `id` | Schedule id |
+| `id` | Schedule ID |
 
-Emits `TokensReleased(id, beneficiary, amount)` and `Transfer(vault, beneficiary, amount)`. Reverts `UnknownSchedule(id)`, `NothingToRelease()` if `releasableAmount(id) == 0`.
+Emits `TokensReleased(id, beneficiary, amount)` and `Transfer(vault, beneficiary, amount)`. Reverts with `UnknownSchedule(id)` for an invalid ID or `NothingToRelease()` when `releasableAmount(id) == 0`.
 
 ```ts
 const due = await vault.releasableAmount(0n);
 if (due > 0n) await (await vault.release(0n)).wait();
 ```
 
-A beneficiary can call this monthly, yearly or never; nothing is lost by waiting.
+Vested tokens remain claimable until released; there is no claim deadline.
 
 ### `changeBeneficiary(uint256 id, address newBeneficiary)`
 
-Lets the **current beneficiary** move its schedule to another address (wallet rotation, new Safe). Only unreleased tokens are affected.
+The current beneficiary can transfer the schedule to another wallet or Safe. Only unreleased tokens are affected.
 
-| Param | Meaning | Rules |
+| Parameter | Meaning | Rules |
 |---|---|---|
-| `id` | Schedule id | |
+| `id` | Schedule ID | |
 | `newBeneficiary` | New recipient | not `0x0`, not the vault, not the token, not the current beneficiary |
 
-Emits `BeneficiaryChanged(id, previous, current)`. Reverts `NotBeneficiary()` when the caller is not the current beneficiary, `ZeroAddress()`, `InvalidBeneficiary()`.
+Emits `BeneficiaryChanged(id, previous, current)`. Reverts with `UnknownSchedule(id)` for an invalid ID, `NotBeneficiary()` for another caller, or `ZeroAddress()` or `InvalidBeneficiary()` for an invalid new beneficiary.
 
 ```ts
 // signed by the current beneficiary
 await (await vault.changeBeneficiary(4n, "0xNewWallet")).wait();
 ```
 
----
-
 ## Read functions
 
 ### `token() → address`
+
 The HVX token this vault holds.
 
 ### `owner() → address`, `pendingOwner() → address`
-Current owner (foundation Safe, or `0x0` after renounce) and the address that may call `acceptOwnership`.
+
+The current vault owner and the proposed next owner. `owner()` is `0x0` after renunciation. `pendingOwner()` is `0x0` when no transfer is pending.
 
 ### `BPS_DENOMINATOR() → uint256`
+
 `10000`. Basis-point scale for `initialUnlockBps`.
 
 ### `scheduleCount() → uint256`
-Number of schedules. Ids run from `0` to `scheduleCount() - 1`.
+
+Number of schedules. IDs run from `0` to `scheduleCount() - 1` when schedules exist.
 
 ### `getSchedule(uint256 id) → Schedule`
-Full struct (fields above). Reverts `UnknownSchedule(id)`.
+
+Returns the full `Schedule` struct described above. Reverts with `UnknownSchedule(id)` for an invalid ID.
 
 ```ts
 const s = await vault.getSchedule(0n);
@@ -240,13 +239,16 @@ console.log(s.label, fmt(s.total), new Date(Number(s.start) * 1000).toISOString(
 ```
 
 ### `schedulesOf(address beneficiary) → uint256[]`
-Ids whose current beneficiary is `beneficiary`. Kept up to date by `changeBeneficiary`.
+
+IDs of schedules assigned to `beneficiary`. `changeBeneficiary` updates this list and may change its order.
 
 ### `vestedAmount(uint256 id) → uint256`
-Unlocked so far at the current block time, released or not. For a revoked schedule this is the amount vested at `revokedAt`.
+
+Tokens vested at the current block timestamp, including tokens already released. After revocation, this is the amount vested at `revokedAt`.
 
 ### `vestedAmountAt(uint256 id, uint64 timestamp) → uint256`
-Same curve evaluated at an arbitrary Unix time. Use it to preview a schedule or to draw an unlock chart.
+
+Evaluates the vesting curve at a Unix timestamp. Use it to query vesting history, preview a schedule or draw an unlock chart. Timestamps after revocation return the amount vested at `revokedAt`.
 
 ```ts
 const s = await vault.getSchedule(3n);
@@ -257,27 +259,34 @@ for (let m = 0; m <= 36; m += 6) {
 ```
 
 ### `releasableAmount(uint256 id) → uint256`
-`vestedAmount(id) - releasedAmount(id)`. What `release(id)` would pay right now.
+
+`vestedAmount(id) - releasedAmount(id)`: the amount `release(id)` would pay at the current block timestamp.
 
 ### `lockedAmount(uint256 id) → uint256`
-`total - vestedAmount(id)`. Still locked. `0` for fully vested schedules and for revoked ones (the unvested part went back to the owner).
+
+Unvested tokens in an active schedule: `total - vestedAmount(id)`. Returns `0` after full vesting. Also returns `0` after revocation, because the unvested tokens have been refunded.
 
 ### `outstandingAmount(uint256 id) → uint256`
-What the vault still owes this schedule: `total - released`, or for a revoked schedule `vestedAmountAt(id, revokedAt) - released`. `totalCommitted()` is the sum of this over all schedules.
+
+Tokens still owed to the schedule: `total - released`, or `vestedAmountAt(id, revokedAt) - released` after revocation. Includes vested and unvested tokens, excluding releases and refunds.
 
 ### `releasedAmount(uint256 id) → uint256`
-Already paid to the beneficiary.
+
+Tokens already released to the schedule's beneficiaries, including any previous beneficiary.
 
 ### `vestingEnd(uint256 id) → uint64`
-`start + cliffDuration + vestingDuration`. Unix time at which the schedule is fully vested. Unchanged by a revoke.
+
+`start + cliffDuration + vestingDuration`: the scheduled end timestamp. This value does not change after revocation, even though vesting has stopped.
 
 ### `totalCommitted() → uint256`
-Sum of `outstandingAmount(id)` over all schedules: what the vault still owes. Invariant: `token.balanceOf(vault) ≥ totalCommitted()`.
+
+Sum of `outstandingAmount(id)` across all schedules. These tokens are reserved for beneficiaries. The vault maintains `token.balanceOf(vault) ≥ totalCommitted()`.
 
 ### `unallocated() → uint256`
-`token.balanceOf(vault) - totalCommitted()`, or `0`. HVX that arrived by direct transfer and belongs to no schedule. Only this can be withdrawn by the owner.
 
-Dashboard snippet:
+HVX not reserved for schedules, such as tokens sent directly to the vault. Returns `token.balanceOf(vault) - totalCommitted()`, or `0` if the balance is lower. The owner can withdraw this amount.
+
+Read all schedules:
 
 ```ts
 const n = await vault.scheduleCount();
@@ -288,8 +297,6 @@ for (let i = 0n; i < n; i++) {
   console.log(`#${i} ${s.label}: total ${fmt(s.total)} vested ${fmt(vested)} releasable ${fmt(due)} locked ${fmt(locked)}`);
 }
 ```
-
----
 
 ## Events
 
@@ -326,8 +333,8 @@ for (const l of logs) console.log(fmt(l.args.amount), "at block", l.blockNumber,
 | `CannotRecoverVaultToken()` | `recoverERC20` with the HVX address |
 | `OwnableUnauthorizedAccount(account)` | Owner-only or pending-owner-only function called by someone else |
 | `OwnableInvalidOwner(owner)` | Zero owner in constructor |
-| `SafeERC20FailedOperation(token)` | Underlying token transfer returned false / reverted |
+| `SafeERC20FailedOperation(token)` | Token transfer returned false, or the token address has no code; token reverts may propagate their own errors |
 
 ## What the owner cannot do
 
-Edit any field of an existing schedule, pause or delay releases, redirect a payout, revoke a non-revocable schedule, take released tokens, take committed tokens, mint. None of this is gated by a check; the functions simply do not exist.
+The owner cannot change a schedule's allocation or vesting terms, pause or delay releases, redirect a beneficiary's payout, revoke a non-revocable schedule, take released tokens or mint HVX. It can reclaim committed tokens only by revoking a revocable schedule, and only the unvested portion is refunded.

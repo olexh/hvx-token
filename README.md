@@ -1,34 +1,37 @@
 # HiveX (HVX)
 
-BEP-20 token on BNB Smart Chain with a fixed supply of 100,000,000,000 HVX, plus a vesting vault for locked allocations.
-Solidity 0.8.28, OpenZeppelin 5, Hardhat 3. No proxies, no upgrades.
+BEP-20 token on BNB Smart Chain with an initial supply of 100,000,000,000 HVX and a vesting vault for locked allocations.
+Built with Solidity 0.8.28, OpenZeppelin Contracts 5.6 and Hardhat 3. Both contracts are non-upgradeable and use no proxies.
 
 | Contract | What it does | Admin |
 |---|---|---|
-| [`HVXToken`](contracts/HVXToken.sol) | Standard token. Minted once to the treasury. Burnable. EIP-2612 permit. | none |
-| [`HVXVestingVault`](contracts/HVXVestingVault.sol) | Holds locked allocations as fixed schedules and pays them out over time. | foundation multisig, limited |
+| [`HVXToken`](contracts/HVXToken.sol) | Mints the initial supply to the treasury. Supports burns and EIP-2612 permit approvals. | None |
+| [`HVXVestingVault`](contracts/HVXVestingVault.sol) | Holds allocations and releases vested tokens to beneficiaries. | Foundation Safe |
 
 ## How it works
 
-1. The token is deployed with the foundation Safe as treasury. All 100B land there. Nothing can mint more.
-2. The Safe locks each allocation (Sales, Foundation, Liquidity, Team, Ecosystem, Marketing, Reserve) into the vault
-   as a schedule: beneficiary, amount, TGE unlock, cliff, linear vesting period, revocable flag.
+1. Deploy the token with the foundation Safe as treasury. It receives all 100 billion HVX; no more can be minted.
+2. The Safe funds each allocation (Sales, Foundation, Liquidity, Team, Ecosystem, Marketing, Reserve) in the vault.
+   Each schedule defines a beneficiary, amount, initial unlock at the token generation event (TGE), cliff,
+   linear vesting period and whether it can be revoked.
 3. Anyone can call `release(id)`; tokens always go to the schedule's beneficiary.
-4. Staged burns are `burn` calls from the Safe. `totalBurned()` shows the running total.
+4. The Safe calls `burn` for staged treasury burns. `totalBurned()` counts all burns, including those by other holders.
 
-The vault owner can only create schedules with its own tokens, revoke schedules marked revocable at creation
-(the unvested part returns), and recover tokens that belong to no schedule. It cannot edit schedules, pause, or
-touch anyone's balance. Ownership can be renounced once allocations are final.
+The vault owner can fund new schedules, revoke schedules marked revocable and recover tokens not reserved for schedules.
+Revocation refunds only unvested tokens. Schedule amounts and vesting terms are fixed; only the current beneficiary
+can transfer a schedule to another address. The owner cannot pause releases or take tokens from beneficiaries' wallets.
+Vault ownership can be transferred in two steps or renounced permanently.
 
-Everything is readable on BscScan: per-schedule locked, vested, released and releasable amounts, plus vault totals.
+Read each schedule's locked, vested, released and releasable amounts, along with vault totals, on BscScan.
 
 ## Quick start
 
 ```bash
 npm install
-cp .env.example .env      # RPC URLs, deployer key, Etherscan API key
-npm test                  # 42 tests, fuzzing, 100 % coverage
-npm run slither           # static analysis, expects 0 findings
+cp .env.example .env      # Set RPC URLs, deployer key and Etherscan API key
+npm test                 # Unit and fuzz tests
+npm run coverage         # Line and statement coverage
+npm run slither          # Requires Slither and solc 0.8.28 on PATH
 ```
 
 ## Deploy
@@ -40,14 +43,14 @@ npx hardhat verify --network bsc <vault> <token> <treasury>
 CONFIG=config/allocations.json npx hardhat run scripts/schedules.ts --network bsc > safe-batch.json
 ```
 
-Import `safe-batch.json` in the Safe web app (Transaction Builder), collect signatures, execute.
-Full procedure, testnet rehearsal and script reference: [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
+Import `safe-batch.json` into Safe Transaction Builder, collect the required signatures and execute the batch.
+See the [deployment guide](docs/DEPLOYMENT.md) for prerequisites, the testnet rehearsal and script reference.
 
 ## Documentation
 
-- [docs/HVXToken.md](docs/HVXToken.md), [docs/HVXVestingVault.md](docs/HVXVestingVault.md): every function with parameters, reverts, events and ethers.js examples.
-- [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md): mainnet procedure, testnet rehearsal, scripts.
-- [demo/](demo/): standalone demo page for testers and a [client guide](demo/CLIENT-GUIDE.md).
+- [Contract reference](docs/README.md): token and vault functions, parameters, errors, events and ethers.js examples.
+- [Deployment guide](docs/DEPLOYMENT.md): mainnet setup, testnet rehearsal and scripts.
+- [Demo](demo/) and [tester guide](demo/CLIENT-GUIDE.md): wallet transfers, burns and vesting releases.
 
 ## Testnet
 
@@ -57,12 +60,12 @@ Full procedure, testnet rehearsal and script reference: [docs/DEPLOYMENT.md](doc
 | Vault | `0xc0A0C9F25526554b0c777124ADAC00Cc5aE2022a` |
 | Safe (2 of 3) | `0xcA05ac7C594E2D7D2a16b8aebe56763500760779` |
 
-Both contracts are verified on [testnet.bscscan.com](https://testnet.bscscan.com/address/0x73d2230A6060180864E360c1e641767019cAB027#code).
+View the verified source on BscScan: [token](https://testnet.bscscan.com/address/0x73d2230A6060180864E360c1e641767019cAB027#code)
+and [vault](https://testnet.bscscan.com/address/0xc0A0C9F25526554b0c777124ADAC00Cc5aE2022a#code).
 
 ## Security
 
-- OpenZeppelin only, checked arithmetic, custom errors, checks-effects-interactions, SafeERC20.
-- 42 tests including Solidity fuzz properties (1000 runs each), 100 % line and statement coverage.
-- Slither clean under `--fail-pedantic`; the reviewed timestamp comparisons in the vault are suppressed inline.
-- Independent review found no critical or high issues; all findings addressed.
-- Before mainnet: final tokenomics, foundation Safe with hardware-wallet signers, external audit.
+- The contracts use OpenZeppelin components, checked arithmetic, custom errors, checks-effects-interactions and `SafeERC20`.
+- The test suite has 38 TypeScript tests and 4 Solidity fuzz tests with 1,000 runs each. Both contracts have 100% line and statement coverage.
+- Slither reports no findings under `--fail-pedantic` with the repository configuration. Time-based vesting checks and related equality checks have inline suppressions.
+- Before mainnet deployment, finalize tokenomics, set up the foundation Safe with hardware-wallet signers and obtain an external audit.
