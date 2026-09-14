@@ -7,16 +7,12 @@ import {ERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20P
 
 /**
  * @title HiveX (HVX)
- * @notice BEP-20 token with a fixed supply of 100,000,000,000 HVX.
- *
- * The whole supply is minted to the foundation treasury in the constructor.
- * There is no mint function and no owner. Holders can burn their own tokens;
- * burnFrom only works within an allowance the holder granted. Burns show up
- * as Transfer events to the zero address and are summed by totalBurned().
- *
- * Vesting and lock-ups are handled by HVXVestingVault, not by this contract.
+ * @notice BEP-20 token with an initial supply of 100,000,000,000 HVX.
+ * @dev Mints the full supply to the treasury at deployment. No owner or further minting.
+ * Holders can burn tokens directly or through an approved spender. HVXVestingVault handles vesting.
  */
 contract HVXToken is ERC20, ERC20Burnable, ERC20Permit {
+    /// @notice Supply minted at deployment, before any burns.
     uint256 public constant TOTAL_SUPPLY = 100_000_000_000 * 10 ** 18;
 
     error ZeroAddress();
@@ -27,7 +23,7 @@ contract HVXToken is ERC20, ERC20Burnable, ERC20Permit {
         _mint(treasury, TOTAL_SUPPLY);
     }
 
-    /// @notice HVX burned so far.
+    /// @notice Total tokens burned since deployment.
     function totalBurned() external view returns (uint256) {
         return TOTAL_SUPPLY - totalSupply();
     }
