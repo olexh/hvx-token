@@ -1,0 +1,69 @@
+{
+  "_comment": "Testnet rehearsal config. Sales / Liquidity / Marketing go to the demo wallet, the rest to the deployer.",
+  "start": 1789332680,
+  "allocations": [
+    {
+      "label": "Sales",
+      "beneficiary": "0x403ac79402fB55Af1090CF0EBe88bA1d9Cfe8fAe",
+      "amount": "10000000000",
+      "initialUnlockBps": 2000,
+      "cliffDays": 0,
+      "vestingDays": 180,
+      "revocable": false
+    },
+    {
+      "label": "Foundation",
+      "beneficiary": "0x734440C5Abe7320c8A687c30a305Fe9e12a2d48C",
+      "amount": "25000000000",
+      "initialUnlockBps": 0,
+      "cliffDays": 365,
+      "vestingDays": 1095,
+      "revocable": false
+    },
+    {
+      "label": "Exchange / Liquidity",
+      "beneficiary": "0x403ac79402fB55Af1090CF0EBe88bA1d9Cfe8fAe",
+      "amount": "10000000000",
+      "initialUnlockBps": 10000,
+      "cliffDays": 0,
+      "vestingDays": 0,
+      "revocable": false
+    },
+    {
+      "label": "Team",
+      "beneficiary": "0x734440C5Abe7320c8A687c30a305Fe9e12a2d48C",
+      "amount": "15000000000",
+      "initialUnlockBps": 0,
+      "cliffDays": 365,
+      "vestingDays": 730,
+      "revocable": true
+    },
+    {
+      "label": "Ecosystem",
+      "beneficiary": "0x734440C5Abe7320c8A687c30a305Fe9e12a2d48C",
+      "amount": "20000000000",
+      "initialUnlockBps": 500,
+      "cliffDays": 90,
+      "vestingDays": 1095,
+      "revocable": false
+    },
+    {
+      "label": "Marketing",
+      "beneficiary": "0x403ac79402fB55Af1090CF0EBe88bA1d9Cfe8fAe",
+      "amount": "8000000000",
+      "initialUnlockBps": 1000,
+      "cliffDays": 0,
+      "vestingDays": 730,
+      "revocable": false
+    },
+    {
+      "label": "Reserve",
+      "beneficiary": "0x734440C5Abe7320c8A687c30a305Fe9e12a2d48C",
+      "amount": "12000000000",
+      "initialUnlockBps": 0,
+      "cliffDays": 730,
+      "vestingDays": 730,
+      "revocable": false
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "safeAddress": "0xcA05ac7C594E2D7D2a16b8aebe56763500760779",
+  "threshold": 2,
+  "owners": [
+    "0x6ca17cb1Bda7b38298461737580271ef80a43933",
+    "0x4Eb3D1B0f74dA39aA725A7cC24fa13c70733cDB7",
+    "0x581E41d784Ed7dB4590b8f6D9834966AB505C027"
+  ]
+}
