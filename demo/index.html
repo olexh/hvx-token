@@ -1,0 +1,328 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HiveX (HVX) — Testnet Demo</title>
+<style>
+  :root {
+    --bg: #f6f4ee; --card: #fff; --ink: #1a1815; --muted: #7a746a; --line: #e8e4db;
+    --accent: #d9930d; --accent-soft: #fbf1d9; --ok: #2f7d4f; --ok-soft: #e9f4ed; --warn: #b4530a; --warn-soft: #fbeee2;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 -apple-system, "Segoe UI", Inter, Roboto, sans-serif; }
+  a { color: inherit; }
+  .mono { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 13px; }
+  header { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 18px 32px; }
+  .brand { display: flex; align-items: center; gap: 12px; }
+  .logo { width: 34px; height: 34px; border-radius: 9px; background: var(--accent); color: #fff; display: grid; place-items: center; font-weight: 800; }
+  .brand b { font-size: 17px; }
+  .brand span { color: var(--muted); font-size: 13px; margin-left: 6px; }
+  .chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; font-size: 12px; background: var(--card); border: 1px solid var(--line); color: var(--muted); }
+  .chip.ok { color: var(--ok); background: var(--ok-soft); border-color: transparent; }
+  .chip.warn { color: var(--warn); background: var(--warn-soft); border-color: transparent; }
+  .chip.accent { color: #6b4700; background: var(--accent-soft); border-color: transparent; }
+  .chip .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+  button { font: inherit; font-weight: 600; border: 0; background: var(--ink); color: #fff; padding: 9px 16px; border-radius: 10px; cursor: pointer; }
+  button.ghost { background: transparent; color: var(--ink); border: 1px solid var(--line); }
+  button.accent { background: var(--accent); }
+  button.small { padding: 6px 12px; font-size: 13px; }
+  button:disabled { opacity: 0.4; cursor: not-allowed; }
+  main { max-width: 1040px; margin: 0 auto; padding: 8px 32px 80px; display: grid; grid-template-columns: 250px 1fr; gap: 28px; align-items: start; }
+  @media (max-width: 820px) { main { grid-template-columns: 1fr; } aside { position: static !important; } }
+  aside { position: sticky; top: 20px; }
+  .card { background: var(--card); border-radius: 16px; padding: 22px 24px; box-shadow: 0 1px 0 rgba(0,0,0,0.03), 0 8px 24px -20px rgba(0,0,0,0.25); }
+  h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin: 0 0 14px; font-weight: 600; }
+  section + section { margin-top: 24px; }
+  /* checklist */
+  .steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+  .steps li { display: flex; gap: 10px; align-items: center; padding: 8px 10px; border-radius: 10px; cursor: pointer; }
+  .steps li:hover { background: var(--bg); }
+  .steps .n { width: 22px; height: 22px; border-radius: 50%; border: 1.5px solid var(--line); display: grid; place-items: center; font-size: 12px; color: var(--muted); flex: none; }
+  .steps li.done .n { background: var(--ok); border-color: var(--ok); color: #fff; }
+  .steps li.done { color: var(--muted); text-decoration: line-through; }
+  .steps li.next { background: var(--accent-soft); }
+  .steps small { display: block; color: var(--muted); font-size: 12px; text-decoration: none; }
+  .hint { font-size: 12px; color: var(--muted); margin-top: 12px; }
+  /* hero */
+  .hero { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; }
+  .hero > div { padding: 4px 18px; border-left: 1px solid var(--line); }
+  .hero > div:first-child { padding-left: 0; border: 0; }
+  .hero .k { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
+  .hero .v { font-size: 34px; font-weight: 700; letter-spacing: -1px; line-height: 1.2; margin-top: 4px; }
+  .hero .s { font-size: 12px; color: var(--muted); }
+  @media (max-width: 600px) { .hero { grid-template-columns: 1fr; } .hero > div { border: 0; padding: 8px 0; } }
+  /* wallet */
+  .wallet { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
+  .wallet .bal { font-size: 30px; font-weight: 700; letter-spacing: -0.5px; }
+  .wallet .bal small { font-size: 14px; color: var(--muted); font-weight: 500; margin-left: 4px; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .panel { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--line); display: none; }
+  .panel.open { display: block; }
+  .field { display: flex; gap: 10px; align-items: end; flex-wrap: wrap; }
+  .field > div { flex: 1 1 140px; }
+  label { font-size: 12px; color: var(--muted); display: block; margin-bottom: 5px; }
+  input { font: inherit; padding: 9px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); color: var(--ink); width: 100%; }
+  input:focus { outline: 2px solid var(--accent-soft); border-color: var(--accent); }
+  .note { font-size: 12px; color: var(--muted); margin-top: 8px; }
+  /* vesting rows */
+  .rows { display: grid; gap: 6px; }
+  .rowh { display: grid; grid-template-columns: 1.3fr 1fr 1.4fr auto; gap: 14px; align-items: center; padding: 12px 14px; border-radius: 12px; cursor: pointer; }
+  .rowh:hover { background: var(--bg); }
+  .rowh .name { font-weight: 600; }
+  .rowh .name small { display: block; color: var(--muted); font-weight: 400; font-size: 12px; }
+  .bar { height: 6px; border-radius: 999px; background: var(--line); overflow: hidden; display: flex; }
+  .bar i { display: block; height: 100%; }
+  .bar .r { background: var(--ink); } .bar .a { background: var(--accent); }
+  .rowh .avail { font-size: 13px; }
+  .rowh .avail b { display: block; font-size: 15px; }
+  .rowd { display: none; padding: 4px 14px 14px 14px; font-size: 13px; color: var(--muted); }
+  .rowd.open { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 6px 20px; }
+  .rowd b { color: var(--ink); font-weight: 500; }
+  @media (max-width: 600px) { .rowh { grid-template-columns: 1fr auto; } .rowh .bar, .rowh .chipcell { display: none; } }
+  /* misc */
+  details summary { cursor: pointer; list-style: none; display: flex; justify-content: space-between; font-weight: 600; }
+  details summary::after { content: "+"; color: var(--muted); }
+  details[open] summary::after { content: "–"; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; margin-top: 12px; }
+  td { padding: 8px 0; border-top: 1px solid var(--line); vertical-align: top; }
+  td:first-child { color: var(--muted); width: 150px; }
+  .copy { font-size: 11px; padding: 1px 7px; margin-left: 6px; background: var(--bg); color: var(--muted); border: 1px solid var(--line); border-radius: 6px; }
+  .log { list-style: none; padding: 0; margin: 0; font-size: 13px; display: grid; gap: 6px; }
+  .log li { display: flex; justify-content: space-between; gap: 10px; color: var(--muted); }
+  .log li b { color: var(--ink); font-weight: 500; }
+  .toast { position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%); background: var(--ink); color: #fff; padding: 11px 18px; border-radius: 12px; font-size: 14px; max-width: 90vw; display: none; z-index: 10; box-shadow: 0 10px 30px -10px rgba(0,0,0,0.4); }
+  .toast.bad { background: #a83232; } .toast.ok { background: var(--ok); }
+  .empty { color: var(--muted); font-size: 14px; }
+  footer { grid-column: 1 / -1; font-size: 12px; color: var(--muted); margin-top: 20px; }
+</style>
+</head>
+<body>
+<header>
+  <div class="brand"><div class="logo">H</div><div><b>HiveX</b><span>HVX · <span id="netName">testnet</span></span></div></div>
+  <div class="actions"><span class="chip" id="chainChip"><span class="dot"></span>not connected</span><button id="connect">Connect wallet</button></div>
+</header>
+
+<main>
+  <aside>
+    <div class="card">
+      <h2>Try it</h2>
+      <ul class="steps" id="steps">
+        <li data-step="connect" data-go="#wallet"><span class="n">1</span><div>Connect wallet<small>MetaMask, BNB testnet</small></div></li>
+        <li data-step="watch" data-go="#wallet"><span class="n">2</span><div>Add HVX to MetaMask<small>see balance in wallet</small></div></li>
+        <li data-step="send" data-go="#wallet"><span class="n">3</span><div>Send HVX<small>standard transfer</small></div></li>
+        <li data-step="burn" data-go="#wallet"><span class="n">4</span><div>Burn HVX<small>supply goes down</small></div></li>
+        <li data-step="release" data-go="#vesting"><span class="n">5</span><div>Release vested HVX<small>from the vault</small></div></li>
+      </ul>
+      <div class="hint">Everything here is read live from the blockchain. Any address opens on BscScan.</div>
+    </div>
+  </aside>
+
+  <div>
+    <section class="card">
+      <div class="hero">
+        <div><div class="k">Total supply</div><div class="v" id="sSupply">—</div><div class="s">fixed at <span id="sMax">—</span>, no mint function</div></div>
+        <div><div class="k">Burned</div><div class="v" id="sBurned">—</div><div class="s">permanently destroyed</div></div>
+        <div><div class="k">Locked in vesting</div><div class="v" id="sLocked">—</div><div class="s"><span id="sCirc">—</span> circulating</div></div>
+      </div>
+    </section>
+
+    <section class="card" id="wallet">
+      <h2>Your wallet</h2>
+      <div id="walletOff" class="empty">Connect MetaMask to send, burn and release test HVX.</div>
+      <div id="walletOn" hidden>
+        <div class="wallet">
+          <div><div class="bal"><span id="wHvx">—</span><small>HVX</small></div><div class="mono" id="wAddr" style="color:var(--muted)"></div></div>
+          <div class="actions">
+            <button class="ghost" id="addToken">Add to MetaMask</button>
+            <button class="ghost" data-panel="send">Send</button>
+            <button class="accent" data-panel="burn">Burn</button>
+          </div>
+        </div>
+        <div class="panel" id="p-send">
+          <div class="field">
+            <div style="flex:2 1 260px"><label>Recipient</label><input id="tTo" class="mono" placeholder="0x…"></div>
+            <div><label>Amount</label><input id="tAmt" placeholder="100" inputmode="decimal"></div>
+            <div style="flex:0"><button id="tSend">Send HVX</button></div>
+          </div>
+          <div class="note">Plain BEP-20 transfer. No fees, no limits, no hidden logic.</div>
+        </div>
+        <div class="panel" id="p-burn">
+          <div class="field">
+            <div><label>Amount to burn</label><input id="bAmt" placeholder="1000" inputmode="decimal"></div>
+            <div style="flex:0"><button class="accent" id="bSend">Burn HVX</button></div>
+          </div>
+          <div class="note">Burning destroys your own tokens for good. Total supply drops by the same amount. Nobody can burn tokens they do not own.</div>
+        </div>
+        <div class="note" id="gasNote"></div>
+      </div>
+    </section>
+
+    <section class="card" id="vesting">
+      <h2>Vesting schedules</h2>
+      <div class="rows" id="rows"><div class="empty">Loading…</div></div>
+      <div class="note">Click a row for details. Release buttons work once tokens have unlocked; anyone can trigger a release, tokens always go to the beneficiary.</div>
+    </section>
+
+    <section class="card" id="activity" hidden>
+      <h2>Your activity</h2>
+      <ul class="log" id="log"></ul>
+    </section>
+
+    <section class="card">
+      <details>
+        <summary>Contracts and treasury</summary>
+        <table>
+          <tr><td>HVX token</td><td class="mono" id="cToken"></td></tr>
+          <tr><td>Vesting vault</td><td class="mono" id="cVault"></td></tr>
+          <tr><td>Foundation Safe</td><td class="mono" id="cSafe"></td></tr>
+          <tr><td>Safe signers</td><td id="cSigners">—</td></tr>
+          <tr><td>Treasury holds</td><td id="cSafeBal">—</td></tr>
+          <tr><td>Admin rights</td><td>Token: none. Vault owner (the Safe) can only create schedules and revoke ones marked revocable.</td></tr>
+          <tr><td>Source</td><td>Verified on BscScan, OpenZeppelin 5, no proxy.</td></tr>
+        </table>
+      </details>
+    </section>
+  </div>
+  <footer>Refreshes every 15 s · last update <span id="updated">—</span></footer>
+</main>
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"></script>
+<script src="config.js"></script>
+<script>
+(async () => {
+  const C = window.HVX_CONFIG, { ethers } = window;
+  const TOKEN_ABI = ["function totalSupply() view returns (uint256)", "function TOTAL_SUPPLY() view returns (uint256)", "function totalBurned() view returns (uint256)", "function balanceOf(address) view returns (uint256)", "function transfer(address,uint256) returns (bool)", "function burn(uint256)"];
+  const VAULT_ABI = ["function scheduleCount() view returns (uint256)", "function totalCommitted() view returns (uint256)", "function getSchedule(uint256) view returns (tuple(address beneficiary,string label,uint256 total,uint256 released,uint64 start,uint64 cliffDuration,uint64 vestingDuration,uint64 revokedAt,uint16 initialUnlockBps,bool revocable,bool revoked))", "function vestedAmount(uint256) view returns (uint256)", "function releasableAmount(uint256) view returns (uint256)", "function lockedAmount(uint256) view returns (uint256)", "function vestingEnd(uint256) view returns (uint64)", "function release(uint256)"];
+  const SAFE_ABI = ["function getOwners() view returns (address[])", "function getThreshold() view returns (uint256)"];
+  const rpc = new ethers.JsonRpcProvider(C.rpcUrl, C.chainId, { staticNetwork: true });
+  const token = new ethers.Contract(C.token, TOKEN_ABI, rpc), vault = new ethers.Contract(C.vault, VAULT_ABI, rpc), safe = new ethers.Contract(C.safe, SAFE_ABI, rpc);
+
+  const $ = (id) => document.getElementById(id);
+  const short = (a) => a.slice(0, 6) + "…" + a.slice(-4);
+  const full = new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 }), compact = new Intl.NumberFormat("en-US", { notation: "compact", maximumFractionDigits: 2 });
+  const num = (w) => Number(ethers.formatUnits(w, 18));
+  const hvx = (w, c = true) => `<span title="${full.format(num(w))} HVX">${(c ? compact : full).format(num(w))}</span>`;
+  const when = (ts) => new Date(Number(ts) * 1000).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
+  const days = (s) => Number(s) / 86400;
+  const link = (a, kind = "address") => `<a href="${C.explorer}/${kind}/${a}" target="_blank" rel="noopener">${short(a)}</a><button class="copy" data-copy="${a}">copy</button>`;
+  let tt; const toast = (m, cls = "") => { const t = $("toast"); t.textContent = m; t.className = "toast " + cls; t.style.display = "block"; clearTimeout(tt); tt = setTimeout(() => t.style.display = "none", 6000); };
+
+  $("netName").textContent = C.chainName;
+  $("cToken").innerHTML = link(C.token, "token"); $("cVault").innerHTML = link(C.vault); $("cSafe").innerHTML = link(C.safe);
+
+  // ----- checklist state
+  const doneKey = () => "hvx-steps-" + (me || "anon");
+  let done = new Set();
+  const loadSteps = () => { try { done = new Set(JSON.parse(localStorage.getItem(doneKey()) || "[]")); } catch { done = new Set(); } paintSteps(); };
+  const markDone = (s) => { done.add(s); try { localStorage.setItem(doneKey(), JSON.stringify([...done])); } catch {} paintSteps(); };
+  function paintSteps() {
+    let nextSet = false;
+    for (const li of $("steps").children) {
+      const d = done.has(li.dataset.step); li.classList.toggle("done", d);
+      li.classList.toggle("next", !d && !nextSet); if (!d) nextSet = true;
+      if (d) li.querySelector(".n").textContent = "✓";
+    }
+  }
+  paintSteps();
+
+  // ----- wallet
+  let signer, me = null;
+  const chainHex = "0x" + C.chainId.toString(16);
+  async function ensureChain() {
+    try { await window.ethereum.request({ method: "wallet_switchEthereumChain", params: [{ chainId: chainHex }] }); }
+    catch (e) {
+      if (e.code !== 4902) throw e;
+      await window.ethereum.request({ method: "wallet_addEthereumChain", params: [{ chainId: chainHex, chainName: C.chainName, nativeCurrency: { name: "BNB", symbol: C.chainId === 56 ? "BNB" : "tBNB", decimals: 18 }, rpcUrls: [C.rpcUrl], blockExplorerUrls: [C.explorer] }] });
+    }
+  }
+  $("connect").onclick = async () => {
+    if (!window.ethereum) return toast("No wallet found. Install MetaMask first.", "bad");
+    try {
+      await ensureChain();
+      const bp = new ethers.BrowserProvider(window.ethereum);
+      await bp.send("eth_requestAccounts", []);
+      signer = await bp.getSigner(); me = await signer.getAddress();
+      $("connect").textContent = short(me);
+      $("chainChip").className = "chip ok"; $("chainChip").innerHTML = '<span class="dot"></span>' + C.chainName;
+      $("walletOff").hidden = true; $("walletOn").hidden = false; $("wAddr").innerHTML = link(me);
+      loadSteps(); markDone("connect"); await refresh();
+    } catch (e) { toast(e.shortMessage || e.message, "bad"); }
+  };
+  $("addToken").onclick = () => window.ethereum.request({ method: "wallet_watchAsset", params: { type: "ERC20", options: { address: C.token, symbol: "HVX", decimals: 18 } } }).then(() => markDone("watch")).catch((e) => toast(e.message, "bad"));
+  window.ethereum?.on?.("accountsChanged", () => location.reload());
+  window.ethereum?.on?.("chainChanged", () => location.reload());
+
+  document.addEventListener("click", (e) => {
+    const c = e.target.closest("[data-copy]"); if (c) { navigator.clipboard.writeText(c.dataset.copy); toast("Copied"); return; }
+    const p = e.target.closest("[data-panel]"); if (p) { for (const el of document.querySelectorAll(".panel")) el.classList.toggle("open", el.id === "p-" + p.dataset.panel && !el.classList.contains("open")); return; }
+    const s = e.target.closest("[data-step]"); if (s) { document.querySelector(s.dataset.go)?.scrollIntoView({ block: "start" }); return; }
+    const r = e.target.closest("[data-row]"); if (r && !e.target.closest("button")) { $("d-" + r.dataset.row).classList.toggle("open"); return; }
+    const rel = e.target.closest("[data-release]"); if (rel) send("Release", () => vault.connect(signer).release(BigInt(rel.dataset.release)), "release", `Released schedule #${rel.dataset.release}`);
+  });
+
+  const log = [];
+  async function send(label, fn, step, text) {
+    if (!signer) return toast("Connect your wallet first", "bad");
+    try {
+      toast(label + ": confirm in MetaMask…");
+      const tx = await fn(); toast(label + ": waiting for confirmation…");
+      await tx.wait();
+      toast(label + " confirmed", "ok"); markDone(step);
+      log.unshift({ text, hash: tx.hash }); $("activity").hidden = false;
+      $("log").innerHTML = log.map((l) => `<li><b>${l.text}</b><a href="${C.explorer}/tx/${l.hash}" target="_blank" rel="noopener" class="mono">${short(l.hash)}</a></li>`).join("");
+      await refresh();
+    } catch (e) { toast(label + " failed: " + (e.shortMessage || e.reason || e.message), "bad"); }
+  }
+  $("tSend").onclick = () => {
+    const to = $("tTo").value.trim(), amt = $("tAmt").value.trim();
+    if (!ethers.isAddress(to)) return toast("Enter a valid recipient address", "bad");
+    if (!(Number(amt) > 0)) return toast("Enter an amount", "bad");
+    send("Send", () => token.connect(signer).transfer(to, ethers.parseUnits(amt, 18)), "send", `Sent ${amt} HVX to ${short(to)}`);
+  };
+  $("bSend").onclick = () => {
+    const amt = $("bAmt").value.trim();
+    if (!(Number(amt) > 0)) return toast("Enter an amount", "bad");
+    if (!confirm(`Burn ${amt} HVX permanently?`)) return;
+    send("Burn", () => token.connect(signer).burn(ethers.parseUnits(amt, 18)), "burn", `Burned ${amt} HVX`);
+  };
+
+  // ----- data
+  const status = (s, vested, now) => s.revoked ? ["Revoked", "warn"] : s.released === s.total ? ["Fully released", "ok"] : vested === s.total ? ["Unlocked", "ok"] : now < s.start ? ["Before TGE", ""] : now < s.start + s.cliffDuration ? ["Cliff", "warn"] : ["Vesting", "accent"];
+  async function refresh() {
+    try {
+      const [max, supply, burned, committed, safeBal, count, owners, thr, block] = await Promise.all([token.TOTAL_SUPPLY(), token.totalSupply(), token.totalBurned(), vault.totalCommitted(), token.balanceOf(C.safe), vault.scheduleCount(), safe.getOwners(), safe.getThreshold(), rpc.getBlock("latest")]);
+      const now = BigInt(block.timestamp);
+      $("sSupply").innerHTML = hvx(supply); $("sMax").innerHTML = hvx(max); $("sBurned").innerHTML = hvx(burned); $("sLocked").innerHTML = hvx(committed); $("sCirc").innerHTML = hvx(supply - committed - safeBal);
+      $("cSigners").textContent = `${thr} of ${owners.length} required · ` + owners.map(short).join(", "); $("cSafeBal").innerHTML = hvx(safeBal, false) + " HVX";
+      if (me) { const [b, g] = await Promise.all([token.balanceOf(me), rpc.getBalance(me)]); $("wHvx").innerHTML = hvx(b, false); $("gasNote").textContent = `Gas: ${Number(ethers.formatEther(g)).toFixed(4)} tBNB`; }
+
+      const rows = await Promise.all([...Array(Number(count)).keys()].map(async (i) => { const [s, vested, releasable, locked, end] = await Promise.all([vault.getSchedule(i), vault.vestedAmount(i), vault.releasableAmount(i), vault.lockedAmount(i), vault.vestingEnd(i)]); return { i, s, vested, releasable, locked, end }; }));
+      rows.sort((a, b) => (me && b.s.beneficiary.toLowerCase() === me.toLowerCase()) - (me && a.s.beneficiary.toLowerCase() === me.toLowerCase()) || a.i - b.i);
+      $("rows").innerHTML = rows.map(({ i, s, vested, releasable, locked, end }) => {
+        const [st, cls] = status(s, vested, now), mine = me && s.beneficiary.toLowerCase() === me.toLowerCase();
+        const pr = Number(s.released * 1000n / s.total) / 10, pa = Number(releasable * 1000n / s.total) / 10;
+        return `<div class="rowh" data-row="${i}">
+          <div class="name">${s.label}${mine ? ' <span class="chip accent" style="padding:1px 8px">yours</span>' : ""}<small>${hvx(s.total, false)} HVX</small></div>
+          <div class="chipcell"><span class="chip ${cls}">${st}</span></div>
+          <div class="bar"><i class="r" style="width:${pr}%"></i><i class="a" style="width:${pa}%"></i></div>
+          <div class="avail">${releasable > 0n ? `<button class="small ${mine ? "accent" : "ghost"}" data-release="${i}" ${me ? "" : "disabled"}>Release ${hvx(releasable)}</button>` : `<span style="color:var(--muted)">nothing to release</span>`}</div>
+        </div>
+        <div class="rowd" id="d-${i}">
+          <div>Beneficiary <b>${short(s.beneficiary)}</b></div>
+          <div>Released <b>${hvx(s.released)}</b> · locked <b>${hvx(locked)}</b></div>
+          <div>TGE unlock <b>${Number(s.initialUnlockBps) / 100}%</b> on <b>${when(s.start)}</b></div>
+          <div>Cliff <b>${days(s.cliffDuration)} d</b> · linear <b>${days(s.vestingDuration)} d</b></div>
+          <div>${s.revoked ? `Revoked <b>${when(s.revokedAt)}</b>` : `Fully unlocked <b>${when(end)}</b>`}${s.revocable ? " · revocable" : ""}</div>
+        </div>`;
+      }).join("");
+      $("updated").textContent = new Date().toLocaleTimeString();
+    } catch (e) { console.error(e); toast("Could not load chain data: " + (e.shortMessage || e.message), "bad"); }
+  }
+  await refresh(); setInterval(refresh, 15000);
+})();
+</script>
+</body>
+</html>
