@@ -44,12 +44,12 @@ npm run slither          # Requires Slither and solc 0.8.28 on PATH
 
 | | Address |
 |---|---|
-| Token | `0x73d2230A6060180864E360c1e641767019cAB027` |
-| Vault | `0xc0A0C9F25526554b0c777124ADAC00Cc5aE2022a` |
-| Safe (2 of 3) | `0xcA05ac7C594E2D7D2a16b8aebe56763500760779` |
+| Token | `0xB92f8c1e40D83389c70Bb654F83a71B8f4979d69` |
+| Vault | `0x414e9FA80ED96BA5181B7ab1aCeBFcA342C0C20C` |
+| Safe (2 of 3) | `0x2D2A15e9c774166B8E2638dCbf989848e73c0F68` |
 
-View the verified source on BscScan: [token](https://testnet.bscscan.com/address/0x73d2230A6060180864E360c1e641767019cAB027#code)
-and [vault](https://testnet.bscscan.com/address/0xc0A0C9F25526554b0c777124ADAC00Cc5aE2022a#code).
+View the verified source on BscScan: [token](https://testnet.bscscan.com/address/0xB92f8c1e40D83389c70Bb654F83a71B8f4979d69#code)
+and [vault](https://testnet.bscscan.com/address/0x414e9FA80ED96BA5181B7ab1aCeBFcA342C0C20C#code).
 
 ## Security
 

@@ -1,10 +1,10 @@
 {
-  "_comment": "Testnet rehearsal config. Sales / Liquidity / Marketing go to the demo wallet, the rest to the deployer.",
-  "start": 1789332680,
+  "_comment": "Testnet rehearsal config. Each allocation has its own holder derived from the client test phrase (.demo-wallet.bscTestnet.json, accounts 0-6).",
+  "start": 1789490822,
   "allocations": [
     {
       "label": "Sales",
-      "beneficiary": "0x403ac79402fB55Af1090CF0EBe88bA1d9Cfe8fAe",
+      "beneficiary": "0xcd1FA94c98A63474CFcDF7464b174D2C7852AE65",
       "amount": "10000000000",
       "initialUnlockBps": 2000,
       "cliffDays": 0,
@@ -13,7 +13,7 @@
     },
     {
       "label": "Foundation",
-      "beneficiary": "0x734440C5Abe7320c8A687c30a305Fe9e12a2d48C",
+      "beneficiary": "0xc46C396A21DA46415998be9c17b29538f5a77D4a",
       "amount": "25000000000",
       "initialUnlockBps": 0,
       "cliffDays": 365,
@@ -22,7 +22,7 @@
     },
     {
       "label": "Exchange / Liquidity",
-      "beneficiary": "0x403ac79402fB55Af1090CF0EBe88bA1d9Cfe8fAe",
+      "beneficiary": "0xAF5c688364aF991f80424727f2D3C01c996B96f0",
       "amount": "10000000000",
       "initialUnlockBps": 10000,
       "cliffDays": 0,
@@ -31,7 +31,7 @@
     },
     {
       "label": "Team",
-      "beneficiary": "0x734440C5Abe7320c8A687c30a305Fe9e12a2d48C",
+      "beneficiary": "0x7CcB7f8C5bAEB2d45a6b2a9083Ff0E8C84B60223",
       "amount": "15000000000",
       "initialUnlockBps": 0,
       "cliffDays": 365,
@@ -40,7 +40,7 @@
     },
     {
       "label": "Ecosystem",
-      "beneficiary": "0x734440C5Abe7320c8A687c30a305Fe9e12a2d48C",
+      "beneficiary": "0x74984063F1Ceae4547b0FEF7Dc12aAAD0E2b201d",
       "amount": "20000000000",
       "initialUnlockBps": 500,
       "cliffDays": 90,
@@ -49,7 +49,7 @@
     },
     {
       "label": "Marketing",
-      "beneficiary": "0x403ac79402fB55Af1090CF0EBe88bA1d9Cfe8fAe",
+      "beneficiary": "0x56c3F696f02bb14C832A8e863DF1FF1b3CeD842c",
       "amount": "8000000000",
       "initialUnlockBps": 1000,
       "cliffDays": 0,
@@ -58,7 +58,7 @@
     },
     {
       "label": "Reserve",
-      "beneficiary": "0x734440C5Abe7320c8A687c30a305Fe9e12a2d48C",
+      "beneficiary": "0xE4a00f47c42E7bAaBE2cc76a928AAAb9e22a71fD",
       "amount": "12000000000",
       "initialUnlockBps": 0,
       "cliffDays": 730,

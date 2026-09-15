@@ -71,7 +71,7 @@ console.log(fmt(await token.totalBurned()), "HVX burned so far");
 | `account` | Any address |
 
 ```ts
-const bal = await token.balanceOf("0x403ac79402fB55Af1090CF0EBe88bA1d9Cfe8fAe"); // HVX base units
+const bal = await token.balanceOf("0xcd1FA94c98A63474CFcDF7464b174D2C7852AE65"); // HVX base units
 ```
 
 ### `allowance(address owner, address spender) → uint256`

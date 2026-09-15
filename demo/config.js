@@ -5,8 +5,8 @@ window.HVX_CONFIG = {
   "chainName": "BNB Smart Chain Testnet",
   "rpcUrl": "https://bsc-testnet-rpc.publicnode.com",
   "explorer": "https://testnet.bscscan.com",
-  "token": "0x73d2230A6060180864E360c1e641767019cAB027",
-  "vault": "0xc0A0C9F25526554b0c777124ADAC00Cc5aE2022a",
-  "safe": "0xcA05ac7C594E2D7D2a16b8aebe56763500760779",
-  "demoWallet": "0x403ac79402fB55Af1090CF0EBe88bA1d9Cfe8fAe"
+  "token": "0xB92f8c1e40D83389c70Bb654F83a71B8f4979d69",
+  "vault": "0x414e9FA80ED96BA5181B7ab1aCeBFcA342C0C20C",
+  "safe": "0x2D2A15e9c774166B8E2638dCbf989848e73c0F68",
+  "demoWallet": "0xcd1FA94c98A63474CFcDF7464b174D2C7852AE65"
 };
