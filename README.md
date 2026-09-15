@@ -88,7 +88,7 @@ npx hardhat run scripts/demo-config.ts --network bscTestnet                    #
 ## Documentation
 
 - [Contract reference](docs/README.md): token and vault functions, parameters, errors, events and ethers.js examples.
-- [Demo](demo/) and [tester guide](demo/CLIENT-GUIDE.md): wallet transfers, burns and vesting releases.
+- [Demo](demo/): wallet transfers, burns and vesting releases on testnet.
 
 ## Testnet
 
