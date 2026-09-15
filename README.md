@@ -35,56 +35,6 @@ npm run coverage         # Line and statement coverage
 npm run slither          # Requires Slither and solc 0.8.28 on PATH
 ```
 
-## Deploy
-
-Prerequisites: a foundation Safe on BNB Smart Chain (its address becomes `TREASURY`), `config/allocations.json`
-copied from `config/allocations.example.json` with the final allocations (whole HVX for amounts, days for durations,
-basis points for `initialUnlockBps`, Unix seconds for `start`), a deployer wallet funded for gas, and `.env` with
-`BSC_RPC_URL`, `DEPLOYER_PRIVATE_KEY` and `ETHERSCAN_API_KEY`. The deployer holds no contract privileges after deployment.
-
-```bash
-TREASURY=0xFoundationSafe npx hardhat run scripts/deploy.ts --network bsc   # Writes deployments/bsc.json
-npx hardhat verify --network bsc <token> <treasury>
-npx hardhat verify --network bsc <vault> <token> <treasury>
-CONFIG=config/allocations.json npx hardhat run scripts/schedules.ts --network bsc > safe-batch.json
-```
-
-Import `safe-batch.json` into Safe Transaction Builder. Signers review the `approve` call and one `createSchedule`
-call per allocation, then sign and execute the batch. Check the result with `npx hardhat run scripts/status.ts --network bsc`.
-Optionally call `renounceOwnership()` from the Safe once all allocations are funded. This permanently disables
-schedule creation, revocation, withdrawals and token recovery; releases and beneficiary transfers remain available.
-
-### Testnet rehearsal
-
-Same flow on BSC testnet (chain ID 97) with a Safe owned by local test accounts. The scripts read existing keys from
-the gitignored `.signers.bscTestnet.json` and `.demo-wallet.bscTestnet.json`; they do not generate them. Fund the
-deployer, the first signer and the demo wallet with tBNB, and update the beneficiaries and start time in
-`config/allocations.testnet.json`. Use these local keys only for testnet.
-
-```bash
-THRESHOLD=2 npx hardhat run scripts/safe-create.ts --network bscTestnet
-TREASURY=<safe> npx hardhat run scripts/deploy.ts --network bscTestnet
-CONFIG=config/allocations.testnet.json npx hardhat run scripts/schedules.ts --network bscTestnet > safe-batch.json
-BATCH=safe-batch.json npx hardhat run scripts/safe-exec.ts --network bscTestnet  # Sign and execute with local test keys
-npx hardhat run scripts/onchain-test.ts --network bscTestnet                   # Send test transactions
-npx hardhat run scripts/demo-config.ts --network bscTestnet                    # Update the demo configuration
-```
-
-`MODE=send` makes `schedules.ts` send the transactions directly when the deployer is the vault owner. It submits real transactions; it is not a simulation.
-
-### Scripts
-
-| Script | Purpose |
-|---|---|
-| `deploy.ts` | Deploy token and vault, write `deployments/<network>.json` |
-| `schedules.ts` | Build a Safe Transaction Builder batch from the allocation config, or send transactions directly with `MODE=send` |
-| `status.ts` | Print every schedule: locked, vested, released, releasable |
-| `release.ts` | Release one schedule (`ID=n`) |
-| `safe-create.ts` | Testnet: create a Safe from local signer keys |
-| `safe-exec.ts` | Testnet: sign and execute a batch with N of M local signers |
-| `onchain-test.ts` | Testnet: exercise token and vault functions, including calls from the Safe |
-| `demo-config.ts` | Write `demo/config.js` from the current deployment |
-
 ## Documentation
 
 - [Contract reference](docs/README.md): token and vault functions, parameters, errors, events and ethers.js examples.
