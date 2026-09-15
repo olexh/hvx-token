@@ -61,10 +61,8 @@ Use `MODE=send` with `schedules.ts` to send transactions directly when the deplo
 | `schedules.ts` | Build a Safe Transaction Builder batch from the allocation config, or send transactions directly with `MODE=send` |
 | `status.ts` | Print every schedule: locked, vested, released, releasable |
 | `release.ts` | Release one schedule (`ID=n`) |
-| `balance.ts` | Print the deployer's gas balance |
 | `safe-create.ts` | Testnet: create a Safe from local signer keys |
 | `safe-exec.ts` | Testnet: sign and execute a batch with N of M local signers |
-| `safe-walkthrough.ts` | Testnet: step-by-step demonstration of the signature threshold |
 | `onchain-test.ts` | Testnet: exercise token and vault functions, including calls from the Safe |
 | `demo-config.ts` | Write `demo/config.js` from the current deployment |
 
