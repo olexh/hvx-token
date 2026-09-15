@@ -22,3 +22,6 @@ safe-batch*.json
 .vscode/
 .idea/
 .DS_Store
+
+# local-only docs
+docs/DEPLOYMENT.md
