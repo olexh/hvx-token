@@ -106,4 +106,3 @@ and [vault](https://testnet.bscscan.com/address/0xc0A0C9F25526554b0c777124ADAC00
 - The contracts use OpenZeppelin components, checked arithmetic, custom errors, checks-effects-interactions and `SafeERC20`.
 - The test suite has 38 TypeScript tests and 4 Solidity fuzz tests with 1,000 runs each. Both contracts have 100% line and statement coverage.
 - Slither reports no findings under `--fail-pedantic` with the repository configuration. Time-based vesting checks and related equality checks have inline suppressions.
-- Before mainnet deployment, finalize tokenomics, set up the foundation Safe with hardware-wallet signers and obtain an external audit.
