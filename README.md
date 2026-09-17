@@ -40,6 +40,14 @@ npm run slither          # Requires Slither and solc 0.8.28 on PATH
 - [Contract reference](docs/README.md): token and vault functions, parameters, errors, events and ethers.js examples.
 - [Demo](demo/): wallet transfers, burns and vesting releases on testnet.
 
+## Mainnet
+
+| | Address |
+|---|---|
+| Safe (2 of 3) | `0xc5748294eE8884E7ac0bf27E0978cBA4c81b6d75` |
+
+The token and vault are not deployed yet. The Safe becomes `TREASURY` at deployment.
+
 ## Testnet
 
 | | Address |
