@@ -1,0 +1,8 @@
+{
+  "network": "bsc",
+  "chainId": 56,
+  "treasury": "0xc5748294eE8884E7ac0bf27E0978cBA4c81b6d75",
+  "HVXToken": "0x252Ce29d2a58B70f98fe80a67773747770Bb0028",
+  "HVXVestingVault": "0x04d4D102eed59b34A1A6527b48cCa690daEeC8a3",
+  "deployedAt": "2026-09-17T02:23:53.804Z"
+}

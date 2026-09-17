@@ -44,9 +44,12 @@ npm run slither          # Requires Slither and solc 0.8.28 on PATH
 
 | | Address |
 |---|---|
+| Token | `0x252Ce29d2a58B70f98fe80a67773747770Bb0028` |
+| Vault | `0x04d4D102eed59b34A1A6527b48cCa690daEeC8a3` |
 | Safe (2 of 3) | `0xc5748294eE8884E7ac0bf27E0978cBA4c81b6d75` |
 
-The token and vault are not deployed yet. The Safe becomes `TREASURY` at deployment.
+View the verified source on BscScan: [token](https://bscscan.com/address/0x252Ce29d2a58B70f98fe80a67773747770Bb0028#code)
+and [vault](https://bscscan.com/address/0x04d4D102eed59b34A1A6527b48cCa690daEeC8a3#code).
 
 ## Testnet
 
