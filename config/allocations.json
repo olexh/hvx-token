@@ -1,0 +1,60 @@
+{
+  "_comment": "Mainnet tokenomics. Amounts are whole HVX. Durations in days. initialUnlockBps: basis points unlocked at start. start: Unix seconds of TGE, or \"deploy\" to use the timestamp from deployments/<network>.json. All allocations release to the single address supplied by the client.",
+  "start": "deploy",
+  "allocations": [
+    {
+      "label": "Sales",
+      "beneficiary": "0x4dA31A8A984c1949743674c7570C914e94B2b115",
+      "amount": "30000000000",
+      "initialUnlockBps": 10000,
+      "cliffDays": 0,
+      "vestingDays": 0,
+      "revocable": false
+    },
+    {
+      "label": "Marketing",
+      "beneficiary": "0x4dA31A8A984c1949743674c7570C914e94B2b115",
+      "amount": "5000000000",
+      "initialUnlockBps": 10000,
+      "cliffDays": 0,
+      "vestingDays": 0,
+      "revocable": false
+    },
+    {
+      "label": "Ecosystem",
+      "beneficiary": "0x4dA31A8A984c1949743674c7570C914e94B2b115",
+      "amount": "10000000000",
+      "initialUnlockBps": 10000,
+      "cliffDays": 0,
+      "vestingDays": 0,
+      "revocable": false
+    },
+    {
+      "label": "Foundation",
+      "beneficiary": "0x4dA31A8A984c1949743674c7570C914e94B2b115",
+      "amount": "25000000000",
+      "initialUnlockBps": 2500,
+      "cliffDays": 0,
+      "vestingDays": 120,
+      "revocable": false
+    },
+    {
+      "label": "Team",
+      "beneficiary": "0x4dA31A8A984c1949743674c7570C914e94B2b115",
+      "amount": "20000000000",
+      "initialUnlockBps": 2500,
+      "cliffDays": 0,
+      "vestingDays": 120,
+      "revocable": false
+    },
+    {
+      "label": "Liquidity",
+      "beneficiary": "0x4dA31A8A984c1949743674c7570C914e94B2b115",
+      "amount": "10000000000",
+      "initialUnlockBps": 10000,
+      "cliffDays": 0,
+      "vestingDays": 0,
+      "revocable": false
+    }
+  ]
+}

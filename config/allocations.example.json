@@ -1,5 +1,5 @@
 {
-  "_comment": "PLACEHOLDER tokenomics. Replace amounts/beneficiaries/schedules once finalized. Amounts are whole HVX (no decimals). Durations are in days. initialUnlockBps: basis points unlocked at `start` (1000 = 10 %). start: unix timestamp of TGE (same for every allocation unless noted). Any schedule with initialUnlockBps=10000 and zero durations is fully unlocked at start (use for Sales / Liquidity that must be liquid at TGE). Beneficiaries should be dedicated multisigs (one Safe per allocation) for transparency.",
+  "_comment": "PLACEHOLDER tokenomics. Replace amounts/beneficiaries/schedules once finalized. Amounts are whole HVX (no decimals). Durations are in days. initialUnlockBps: basis points unlocked at `start` (1000 = 10 %). start: unix timestamp of TGE (same for every allocation unless noted), or \"deploy\" to use the deployment timestamp from deployments/<network>.json. Any schedule with initialUnlockBps=10000 and zero durations is fully unlocked at start (use for Sales / Liquidity that must be liquid at TGE). Beneficiaries should be dedicated multisigs (one Safe per allocation) for transparency.",
   "start": 1780000000,
   "allocations": [
     {

@@ -32,12 +32,17 @@ type Allocation = {
   vestingDays: number;
   revocable: boolean;
 };
-type Config = { start: number; allocations: Allocation[] };
+type Config = { start: number | "deploy"; allocations: Allocation[] };
 
 const cfg: Config = JSON.parse(readFileSync(configPath, "utf8"));
 const deployment = JSON.parse(readFileSync(`deployments/${networkName}.json`, "utf8"));
 const vaultAddress: string = deployment.HVXVestingVault;
 const tokenAddress: string = deployment.HVXToken;
+// start: Unix seconds, or "deploy" to use the deployment timestamp from deployments/<network>.json.
+const start =
+  cfg.start === "deploy" ? BigInt(Math.floor(Date.parse(deployment.deployedAt) / 1000)) : BigInt(cfg.start);
+if (start <= 0n) throw new Error("bad start");
+console.error(`start = ${start} (${new Date(Number(start) * 1000).toISOString()})`);
 
 const vaultIface = (await ethers.getContractFactory("HVXVestingVault")).interface;
 const tokenIface = (await ethers.getContractFactory("HVXToken")).interface;
@@ -53,7 +58,7 @@ for (const a of cfg.allocations) {
     a.beneficiary,
     a.label,
     amount,
-    BigInt(cfg.start),
+    start,
     BigInt(a.cliffDays) * DAY,
     BigInt(a.vestingDays) * DAY,
     a.initialUnlockBps,
