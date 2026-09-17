@@ -38,7 +38,7 @@ npm run slither          # Requires Slither and solc 0.8.28 on PATH
 ## Documentation
 
 - [Contract reference](docs/README.md): token and vault functions, parameters, errors, events and ethers.js examples.
-- [Demo](demo/): wallet transfers, burns and vesting releases on testnet.
+- [Demo](demo/): wallet transfers, burns and vesting releases on BNB Smart Chain.
 
 ## Mainnet
 

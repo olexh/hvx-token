@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>HiveX (HVX) — Testnet Demo</title>
+<title>HiveX (HVX) — Demo</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23d9930d'/%3E%3Ctext x='16' y='22' text-anchor='middle' font-family='sans-serif' font-weight='800' font-size='18' fill='%23fff'%3EH%3C/text%3E%3C/svg%3E">
 <style>
   :root {
@@ -105,7 +105,7 @@
 </head>
 <body>
 <header>
-  <div class="brand"><div class="logo">H</div><div><b>HiveX</b><span>HVX · <span id="netName">testnet</span></span></div></div>
+  <div class="brand"><div class="logo">H</div><div><b>HiveX</b><span>HVX · <span id="netName">BNB Smart Chain</span></span></div></div>
   <div class="actions"><button id="connect">Connect wallet</button></div>
 </header>
 
@@ -121,7 +121,7 @@
 
     <section class="card" id="wallet">
       <h2>Your wallet</h2>
-      <div id="walletOff" class="empty">Connect MetaMask to send, burn and release test HVX.</div>
+      <div id="walletOff" class="empty">Connect MetaMask to send, burn and release HVX.</div>
       <div id="walletOn" hidden>
         <div class="wallet">
           <div><div class="bal"><span id="wHvx">—</span><small>HVX</small></div><div class="mono muted" id="wAddr"></div></div>
@@ -205,7 +205,7 @@
   // Turn wallet / contract errors into one plain sentence.
   const FRIENDLY = {
     ACTION_REJECTED: "You cancelled the request in MetaMask.",
-    INSUFFICIENT_FUNDS: "Not enough tBNB to pay the network fee. Ask the demo contact for more.",
+    INSUFFICIENT_FUNDS: `Not enough ${C.chainId === 56 ? "BNB" : "tBNB"} to pay the network fee.`,
     NothingToRelease: "Nothing to release right now. Tokens unlock over time; check the row details.",
     ERC20InsufficientBalance: "Not enough HVX in this wallet.",
     ERC20InvalidReceiver: "That address cannot receive tokens.",
@@ -290,7 +290,7 @@
       $("sSupply").innerHTML = hvx(supply); $("sBurned").innerHTML = hvx(burned); $("sLocked").innerHTML = hvx(committed); $("sCirc").innerHTML = hvx(supply - committed - safeBal);
       $("cSigners").innerHTML = `${thr} of ${owners.length} must sign · ` + owners.map((o) => addr(o)).join(", ");
       $("cSafeBal").innerHTML = hvx(safeBal, false) + " HVX";
-      if (me) { const [b, g] = await Promise.all([token.balanceOf(me), rpc.getBalance(me)]); $("wHvx").innerHTML = hvx(b, false); $("gasNote").textContent = `Network fee balance: ${Number(ethers.formatEther(g)).toFixed(4)} tBNB`; }
+      if (me) { const [b, g] = await Promise.all([token.balanceOf(me), rpc.getBalance(me)]); $("wHvx").innerHTML = hvx(b, false); $("gasNote").textContent = `Network fee balance: ${Number(ethers.formatEther(g)).toFixed(4)} ${C.chainId === 56 ? "BNB" : "tBNB"}`; }
 
       const rows = await Promise.all([...Array(Number(count)).keys()].map(async (i) => { const [s, vested, releasable, locked, end] = await Promise.all([vault.getSchedule(i), vault.vestedAmount(i), vault.releasableAmount(i), vault.lockedAmount(i), vault.vestingEnd(i)]); return { i, s, vested, releasable, locked, end }; }));
       rows.sort((a, b) => (me && b.s.beneficiary.toLowerCase() === me.toLowerCase()) - (me && a.s.beneficiary.toLowerCase() === me.toLowerCase()) || a.i - b.i);
