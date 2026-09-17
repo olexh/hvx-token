@@ -35,7 +35,7 @@
       "amount": "25000000000",
       "initialUnlockBps": 2500,
       "cliffDays": 0,
-      "vestingDays": 120,
+      "vestingDays": 730,
       "revocable": false
     },
     {
@@ -44,7 +44,7 @@
       "amount": "20000000000",
       "initialUnlockBps": 2500,
       "cliffDays": 0,
-      "vestingDays": 120,
+      "vestingDays": 730,
       "revocable": false
     },
     {
