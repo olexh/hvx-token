@@ -25,3 +25,6 @@ safe-batch*.json
 
 # local-only docs
 docs/DEPLOYMENT.md
+
+# local agent instructions
+CLAUDE.md
