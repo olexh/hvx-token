@@ -1,0 +1,410 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HVX Block Deals</title>
+<link rel="icon" href="logo.svg">
+<style>
+  :root {
+    --bg: #f6f4ee; --card: #fff; --ink: #1a1815; --muted: #6b655b; --line: #e8e4db;
+    --accent: #d9930d; --accent-ink: #6b4700; --accent-soft: #fbf1d9;
+    --ok: #2f7d4f; --ok-soft: #e9f4ed; --warn: #b4530a; --warn-soft: #fbeee2; --bad: #a83232; --bad-soft: #f8e6e6;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 -apple-system, "Segoe UI", Inter, Roboto, sans-serif; }
+  a { color: inherit; }
+  .mono { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 13px; word-break: break-all; }
+  header { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 18px 32px; flex-wrap: wrap; }
+  .brand { display: flex; align-items: center; gap: 12px; }
+  .brand img { width: 34px; height: 34px; }
+  .brand b { font-size: 17px; }
+  .brand span { color: var(--muted); font-size: 13px; margin-left: 6px; }
+  .chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 500; background: var(--card); border: 1px solid var(--line); color: var(--muted); white-space: nowrap; }
+  .chip.ok { color: var(--ok); background: var(--ok-soft); border-color: transparent; }
+  .chip.warn { color: var(--warn); background: var(--warn-soft); border-color: transparent; }
+  button { font: inherit; font-weight: 600; border: 0; background: var(--ink); color: #fff; padding: 9px 16px; border-radius: 10px; cursor: pointer; white-space: nowrap; }
+  button.ghost { background: transparent; color: var(--ink); border: 1px solid var(--line); }
+  button.accent { background: var(--accent); }
+  button.small { padding: 5px 11px; font-size: 13px; }
+  button:disabled { opacity: 0.45; cursor: not-allowed; }
+  button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  main { max-width: 760px; margin: 0 auto; padding: 8px 32px 80px; }
+  .card { background: var(--card); border-radius: 16px; padding: 22px 24px; box-shadow: 0 1px 0 rgba(0,0,0,0.03), 0 8px 24px -20px rgba(0,0,0,0.25); }
+  section + section { margin-top: 24px; }
+  h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin: 0 0 14px; font-weight: 600; }
+  h3 { font-size: 15px; margin: 22px 0 10px; }
+  .muted { color: var(--muted); }
+  .note { font-size: 13px; color: var(--muted); margin-top: 10px; }
+  .banner { padding: 12px 14px; border-radius: 12px; font-size: 14px; }
+  .banner.warn { background: var(--warn-soft); color: var(--warn); }
+  .banner.bad { background: var(--bad-soft); color: var(--bad); }
+  .banner.ok { background: var(--ok-soft); color: var(--ok); }
+  .banner ol { margin: 6px 0 0; padding-left: 20px; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 16px; }
+  .grid .wide { grid-column: 1 / -1; }
+  label { font-size: 13px; color: var(--muted); display: block; margin-bottom: 5px; }
+  input, select { font: inherit; padding: 9px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); color: var(--ink); width: 100%; }
+  input:focus, select:focus { outline: 2px solid var(--accent-soft); border-color: var(--accent); }
+  input.invalid { border-color: var(--bad); }
+  .err { color: var(--bad); font-size: 13px; margin-top: 4px; }
+  .err:empty { display: none; }
+  .hint { font-size: 12px; color: var(--muted); margin-top: 4px; }
+  .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .row > input { flex: 1 1 140px; width: auto; }
+  .preview { margin-top: 16px; padding: 14px 16px; border-radius: 12px; background: var(--bg); font-size: 14px; }
+  .preview p { margin: 0 0 4px; }
+  .preview p:last-child { margin: 0; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 16px; }
+  .item { border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; }
+  .item + .item { margin-top: 10px; }
+  .item .top { display: flex; justify-content: space-between; gap: 12px; align-items: start; }
+  .item .top b { font-size: 16px; }
+  .item ul { margin: 8px 0 0; padding-left: 18px; font-size: 14px; }
+  .item .extra { font-size: 13px; color: var(--warn); margin-top: 6px; }
+  .totals { display: flex; justify-content: space-between; gap: 12px; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); flex-wrap: wrap; }
+  .check { display: flex; gap: 10px; align-items: start; margin-top: 16px; font-size: 14px; color: var(--ink); }
+  .check input { width: auto; margin-top: 4px; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  td { padding: 7px 0; border-top: 1px solid var(--line); vertical-align: top; }
+  td:first-child { color: var(--muted); width: 160px; padding-right: 12px; }
+  [hidden] { display: none !important; }
+  @media (max-width: 600px) {
+    header { padding: 14px 16px; }
+    main { padding: 8px 16px 60px; }
+    .card { padding: 18px; }
+    .grid { grid-template-columns: 1fr; }
+    td:first-child { width: 110px; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="brand"><img src="logo.svg" alt=""><div><b>HVX Block Deals</b><span>Lock-up and vesting for block deal buyers</span></div></div>
+  <span class="chip" id="netChip">Connecting…</span>
+</header>
+
+<main>
+  <section class="card">
+    <h2>Foundation Safe</h2>
+    <div id="standalone" class="banner warn" hidden>
+      This page is not open inside the Safe, so it can only prepare a Transaction Builder file.
+      For one-click submission, add it to the Foundation Safe once:
+      <ol>
+        <li>Open the Foundation Safe at app.safe.global.</li>
+        <li>Go to Apps → My custom apps → Add custom Safe App.</li>
+        <li>Paste <b class="mono" id="selfUrl"></b>, accept the warning and open it.</li>
+      </ol>
+      <div class="row" style="margin-top:10px"><label for="netSelect" style="margin:0">Network</label><select id="netSelect" style="width:auto"></select></div>
+    </div>
+    <div id="safeError" class="banner bad" hidden></div>
+    <table id="safeTable" style="margin-top:12px">
+      <tr><td>Safe</td><td class="mono" id="sSafe">—</td></tr>
+      <tr><td>Signers</td><td id="sSigners">—</td></tr>
+      <tr><td>HVX in the Safe</td><td id="sBal">—</td></tr>
+      <tr><td>Vesting vault</td><td class="mono" id="sVault">—</td></tr>
+    </table>
+    <div class="note">Buyers' HVX moves from the Safe into the vesting vault when the transaction executes. Send the HVX to the Safe first.</div>
+  </section>
+
+  <section class="card">
+    <h2>Add a buyer</h2>
+    <form id="form" novalidate autocomplete="off">
+      <div class="grid">
+        <div>
+          <label for="name">Buyer name</label>
+          <input id="name" placeholder="Buyer A" maxlength="48">
+          <div class="hint">Stored on-chain as "Block deal - <span id="labelPreview">Buyer A</span>".</div>
+          <div class="err" id="e-name"></div>
+        </div>
+        <div>
+          <label for="amount">HVX amount</label>
+          <input id="amount" placeholder="100,000,000" inputmode="decimal">
+          <div class="err" id="e-amount"></div>
+        </div>
+        <div class="wide">
+          <label for="wallet">Buyer wallet address</label>
+          <input id="wallet" class="mono" placeholder="0x…" spellcheck="false">
+          <div class="hint">Tokens can only ever be claimed to this address.</div>
+          <div class="err" id="e-wallet"></div>
+        </div>
+        <div class="wide">
+          <label for="unlockDate">Unlock date (UTC)</label>
+          <div class="row">
+            <input id="unlockDate" type="date">
+            <input id="unlockTime" type="time" value="00:00" style="flex:0 1 120px">
+            <button type="button" class="ghost small" data-lock="6">6 months from today</button>
+            <button type="button" class="ghost small" data-lock="12">12 months from today</button>
+          </div>
+          <div class="hint">End of the lock-up. Nothing can be claimed before this moment.</div>
+          <div class="err" id="e-unlockDate"></div>
+        </div>
+        <div>
+          <label for="unlockPercent">Claimable on the unlock date (%)</label>
+          <input id="unlockPercent" value="100" inputmode="decimal">
+          <div class="hint">100 = everything at unlock, no vesting.</div>
+          <div class="err" id="e-unlockPercent"></div>
+        </div>
+        <div class="vest">
+          <label for="vestingMonths">Rest released gradually over (months)</label>
+          <input id="vestingMonths" value="12" inputmode="numeric">
+          <div class="err" id="e-vestingMonths"></div>
+        </div>
+        <div class="vest">
+          <label for="pauseMonths">Wait after unlock before gradual release (months)</label>
+          <input id="pauseMonths" value="0" inputmode="numeric">
+          <div class="hint">Usually 0.</div>
+          <div class="err" id="e-pauseMonths"></div>
+        </div>
+      </div>
+      <div class="preview" id="preview"><p class="muted">Fill in the form to see the schedule.</p></div>
+      <div class="actions"><button type="submit" class="accent">Add to batch</button></div>
+    </form>
+  </section>
+
+  <section class="card">
+    <h2>Batch</h2>
+    <div id="empty" class="muted">No buyers yet. Add one above.</div>
+    <div id="items"></div>
+    <div id="batchFooter" hidden>
+      <div class="totals"><span>Total for <b id="tCount">0</b> buyer(s)</span><b id="tTotal">0 HVX</b></div>
+      <div id="balanceError" class="banner bad" style="margin-top:12px" hidden></div>
+      <label class="check"><input type="checkbox" id="confirm"> <span>I have checked every wallet address, amount and date. Schedules can't be changed or cancelled once executed.</span></label>
+      <div class="actions">
+        <button id="sendBtn" class="accent" disabled>Send to Safe for signing</button>
+        <button id="downloadBtn" class="ghost" disabled>Download Transaction Builder file</button>
+      </div>
+      <div class="note" id="sendNote"></div>
+    </div>
+    <div id="result" class="banner ok" style="margin-top:14px" hidden></div>
+  </section>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js" integrity="sha384-6Zl0Pc8zjSz8KvmNeXRvUQgY4ryFb+BwDvKCmLYcBME0joAaru491tQgi9B7zsMM" crossorigin="anonymous"></script>
+<script type="module">
+import { NETWORKS, TOKEN_ABI, VAULT_ABI, LABEL_PREFIX, addMonthsUTC, buildSchedule, buildTransactions, describeSchedule, formatHVX, txBuilderFile } from "./blockdeal.js";
+
+const { ethers } = window;
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+const hvx = (w) => `${formatHVX(ethers, w)} HVX`;
+const nowSec = () => Math.floor(Date.now() / 1000);
+const same = (a, b) => a && b && a.toLowerCase() === b.toLowerCase();
+
+// ----- Safe Apps messaging (same wire format as @safe-global/safe-apps-sdk 9.1.0)
+const inFrame = window.parent !== window;
+const pending = new Map();
+window.addEventListener("message", (e) => {
+  if (e.source !== window.parent || !e.data || typeof e.data.version === "undefined") return;
+  const cb = pending.get(e.data.id);
+  if (cb) { pending.delete(e.data.id); cb(e.data); }
+});
+function safeCall(method, params, timeoutMs) {
+  return new Promise((resolve, reject) => {
+    const id = Array.from(crypto.getRandomValues(new Uint8Array(5)), (b) => b.toString(16).padStart(2, "0")).join("");
+    pending.set(id, (r) => (r.success ? resolve(r.data) : reject(new Error(r.error))));
+    window.parent.postMessage({ id, method, params, env: { sdkVersion: "9.1.0" } }, "*");
+    if (timeoutMs) setTimeout(() => { if (pending.delete(id)) reject(new Error("timeout")); }, timeoutMs);
+  });
+}
+
+// ----- state
+let chainId = null, net = null, safeAddr = null, safeInfo = null, ownerOk = false, balance = null;
+let provider, token, vault;
+const batch = [];
+
+function link(address) { return `<a href="${net.explorer}/address/${address}" target="_blank" rel="noopener">${address}</a>`; }
+
+async function connect(id) {
+  chainId = id; net = NETWORKS[id];
+  provider = new ethers.JsonRpcProvider(net.rpcUrl, id, { staticNetwork: true });
+  token = new ethers.Contract(net.token, TOKEN_ABI, provider);
+  vault = new ethers.Contract(net.vault, VAULT_ABI, provider);
+  safeAddr = safeInfo ? ethers.getAddress(safeInfo.safeAddress) : net.safe;
+  $("netChip").textContent = net.name; $("netChip").className = "chip ok";
+  $("sSafe").innerHTML = link(safeAddr);
+  $("sVault").innerHTML = link(net.vault);
+  $("sSigners").textContent = safeInfo ? `${safeInfo.threshold} of ${safeInfo.owners.length} must sign` : "—";
+  await refreshChain();
+}
+
+async function refreshChain() {
+  try {
+    const [owner, bal] = await Promise.all([vault.owner(), token.balanceOf(safeAddr)]);
+    ownerOk = same(owner, safeAddr); balance = bal;
+    $("sBal").textContent = hvx(bal);
+    if (!ownerOk) showSafeError(`This Safe does not own the HVX vesting vault, so it can't create schedules. Open this app from the Foundation Safe ${owner}.`);
+    else if (!safeInfo || !safeInfo.isReadOnly) $("safeError").hidden = true;
+  } catch (e) {
+    console.error(e);
+    showSafeError("Could not read the blockchain. Check your connection and reload the page.");
+  }
+  renderBatch();
+}
+
+function showSafeError(msg) { $("safeError").textContent = msg; $("safeError").hidden = false; }
+
+// ----- form
+const FIELDS = ["name", "wallet", "amount", "unlockDate", "unlockTime", "unlockPercent", "vestingMonths", "pauseMonths"];
+const readForm = () => Object.fromEntries(FIELDS.map((f) => [f, $(f).value]));
+let touched = false;
+
+function check(showErrors) {
+  if (!net) return null;
+  const input = readForm();
+  const { errors, schedule } = buildSchedule(ethers, input, net, safeAddr, nowSec());
+  const full = parseFloat(input.unlockPercent) === 100;
+  for (const el of document.querySelectorAll(".vest")) el.hidden = full;
+  for (const f of ["name", "wallet", "amount", "unlockDate", "unlockPercent", "vestingMonths", "pauseMonths"]) {
+    const msg = showErrors && errors[f] && (input[f] || touched) ? errors[f] : "";
+    $("e-" + f).textContent = msg; $(f).classList.toggle("invalid", !!msg);
+  }
+  $("labelPreview").textContent = input.name.trim() || "Buyer A";
+  $("preview").innerHTML = schedule
+    ? `<p><b>${esc(schedule.label)}</b>: ${hvx(schedule.total)} to <span class="mono">${schedule.beneficiary}</span></p>` + describeSchedule(ethers, schedule).map((l) => `<p>${esc(l)}</p>`).join("")
+    : '<p class="muted">Fill in the form to see the schedule.</p>';
+  return schedule;
+}
+
+for (const f of FIELDS) $(f).addEventListener("input", () => check(true));
+document.querySelectorAll("[data-lock]").forEach((b) => b.addEventListener("click", () => {
+  const today = new Date(); const base = Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()) / 1000;
+  $("unlockDate").value = new Date(addMonthsUTC(base, Number(b.dataset.lock)) * 1000).toISOString().slice(0, 10);
+  $("unlockTime").value = "00:00";
+  check(true);
+}));
+
+let adding = false;
+$("form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  touched = true;
+  const s = check(true);
+  if (!s || adding) return;
+  if (batch.some((b) => b.label === s.label)) { $("e-name").textContent = "This name is already in the batch."; $("name").classList.add("invalid"); return; }
+  adding = true;
+  const extra = [];
+  if (batch.some((b) => same(b.beneficiary, s.beneficiary))) extra.push("This wallet is also used by another buyer in this batch.");
+  try {
+    const [ids, code] = await Promise.all([vault.schedulesOf(s.beneficiary), provider.getCode(s.beneficiary)]);
+    if (ids.length) extra.push(`This wallet already has ${ids.length} schedule(s) in the vault (ID ${ids.join(", ")}). A new one will be added.`);
+    if (code !== "0x") extra.push("This address is a smart contract, not a regular wallet. Make sure the buyer controls it.");
+  } catch (err) { console.error(err); }
+  finally { adding = false; }
+  batch.push({ ...s, extra });
+  $("form").reset(); $("unlockTime").value = "00:00"; $("unlockPercent").value = "100"; $("vestingMonths").value = "12"; $("pauseMonths").value = "0";
+  touched = false; check(false);
+  $("result").hidden = true; $("confirm").checked = false;
+  renderBatch();
+});
+
+// ----- batch
+function renderBatch() {
+  $("empty").hidden = batch.length > 0;
+  $("batchFooter").hidden = batch.length === 0;
+  $("items").innerHTML = batch.map((s, i) => `<div class="item">
+    <div class="top"><div><b>${esc(s.name)}</b> <span class="muted">· ${hvx(s.total)}</span><div class="mono muted">${s.beneficiary}</div></div>
+      <div class="row"><button class="ghost small" data-edit="${i}">Edit</button><button class="ghost small" data-remove="${i}">Remove</button></div></div>
+    <ul>${describeSchedule(ethers, s).map((l) => `<li>${esc(l)}</li>`).join("")}</ul>
+    ${s.extra.map((x) => `<div class="extra">${esc(x)}</div>`).join("")}
+  </div>`).join("");
+  const total = batch.reduce((sum, s) => sum + s.total, 0n);
+  $("tCount").textContent = batch.length; $("tTotal").textContent = hvx(total);
+  const short = balance !== null && total > balance;
+  $("balanceError").hidden = !short;
+  if (short) $("balanceError").textContent = `The Safe holds ${hvx(balance)}, but this batch needs ${hvx(total)}. Send ${hvx(total - balance)} more to the Safe first.`;
+  const ready = batch.length > 0 && ownerOk && balance !== null && !short && $("confirm").checked;
+  $("sendBtn").hidden = !safeInfo;
+  $("sendBtn").disabled = !ready || safeInfo?.isReadOnly;
+  $("downloadBtn").disabled = !ready;
+  $("sendNote").textContent = safeInfo
+    ? `The Safe opens its own review screen. After you sign, ${Math.max(Number(safeInfo.threshold) - 1, 0)} more signer(s) confirm it in the Safe's transaction queue.`
+    : "Import the file in the Safe: Apps → Transaction Builder → drag the file in, then create and sign the batch.";
+}
+
+$("items").addEventListener("click", (e) => {
+  const rm = e.target.closest("[data-remove]"), ed = e.target.closest("[data-edit]");
+  if (!rm && !ed) return;
+  const [s] = batch.splice(Number((rm || ed).dataset.remove ?? (rm || ed).dataset.edit), 1);
+  if (ed) {
+    const start = new Date(Number(s.start) * 1000).toISOString();
+    const cliffEnd = Number(s.start + s.cliffDuration), end = cliffEnd + Number(s.vestingDuration);
+    const months = (a, b) => { let n = 0; while (addMonthsUTC(a, n) < b) n++; return n; };
+    $("name").value = s.name; $("wallet").value = s.beneficiary; $("amount").value = formatHVX(ethers, s.total);
+    $("unlockDate").value = start.slice(0, 10); $("unlockTime").value = start.slice(11, 16);
+    $("unlockPercent").value = String(s.initialUnlockBps / 100);
+    $("pauseMonths").value = String(months(Number(s.start), cliffEnd)); $("vestingMonths").value = String(s.vestingDuration > 0n ? months(cliffEnd, end) : 12);
+    check(true); $("name").scrollIntoView({ behavior: "smooth", block: "center" });
+  }
+  $("confirm").checked = false;
+  renderBatch();
+});
+$("confirm").addEventListener("change", renderBatch);
+
+// Re-check everything right before submitting: dates may have passed and the balance may have changed.
+async function finalTxs() {
+  await refreshChain();
+  const now = nowSec();
+  const stale = batch.filter((s) => Number(s.start) <= now);
+  if (stale.length) throw new Error(`The unlock date has already passed for: ${stale.map((s) => s.name).join(", ")}. Edit them first.`);
+  if (!ownerOk) throw new Error("This Safe does not own the vesting vault.");
+  const total = batch.reduce((sum, s) => sum + s.total, 0n);
+  if (total > balance) throw new Error("The Safe doesn't hold enough HVX for this batch.");
+  return buildTransactions(ethers, { ...net, safe: safeAddr }, batch);
+}
+
+$("sendBtn").addEventListener("click", async () => {
+  $("sendBtn").disabled = true; $("result").hidden = true;
+  try {
+    const txs = await finalTxs();
+    const { safeTxHash } = await safeCall("sendTransactions", { txs });
+    const names = batch.map((s) => s.name).join(", ");
+    batch.length = 0; $("confirm").checked = false; renderBatch();
+    const queue = net.safePrefix ? `<a href="https://app.safe.global/transactions/queue?safe=${net.safePrefix}:${safeAddr}" target="_blank" rel="noopener">transaction queue</a>` : "transaction queue";
+    $("result").className = "banner ok";
+    $("result").innerHTML = `Sent to the Safe: ${esc(names)}. The other signers confirm and execute it in the Safe's ${queue}. The HVX is locked once it executes.<div class="mono" style="margin-top:6px">Safe tx ${esc(safeTxHash)}</div>`;
+  } catch (e) {
+    console.error(e);
+    $("result").className = "banner bad";
+    $("result").textContent = /reject/i.test(e.message) ? "Cancelled in the Safe. Nothing was submitted." : "Not sent: " + e.message;
+  }
+  $("result").hidden = false;
+  renderBatch();
+});
+
+$("downloadBtn").addEventListener("click", async () => {
+  try {
+    const txs = await finalTxs();
+    const file = txBuilderFile(ethers, chainId, safeAddr, batch, txs);
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([JSON.stringify(file, null, 2)], { type: "application/json" }));
+    a.download = `hvx-block-deals-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click(); URL.revokeObjectURL(a.href);
+  } catch (e) {
+    $("result").className = "banner bad"; $("result").textContent = "Not created: " + e.message; $("result").hidden = false;
+  }
+});
+
+// ----- start
+$("selfUrl").textContent = location.origin + location.pathname.replace(/index\.html$/, "");
+let info = null;
+if (inFrame) { try { info = await safeCall("getSafeInfo", undefined, 3000); } catch {} }
+if (info) {
+  safeInfo = info;
+  if (!NETWORKS[info.chainId]) {
+    $("netChip").textContent = `Chain ${info.chainId}`; $("netChip").className = "chip warn";
+    showSafeError("This Safe is on a different network. HVX block deals run on BNB Smart Chain.");
+    $("form").querySelectorAll("input, button").forEach((el) => (el.disabled = true));
+  } else {
+    if (info.isReadOnly) showSafeError("You are viewing this Safe without a signer wallet. Connect a signer wallet in the Safe to submit.");
+    await connect(info.chainId);
+  }
+} else {
+  $("standalone").hidden = false;
+  $("netSelect").innerHTML = Object.entries(NETWORKS).map(([id, n]) => `<option value="${id}">${n.name}</option>`).join("");
+  $("netSelect").addEventListener("change", () => { batch.length = 0; connect(Number($("netSelect").value)); });
+  await connect(56);
+}
+check(false);
+</script>
+</body>
+</html>

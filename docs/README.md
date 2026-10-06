@@ -7,6 +7,8 @@ Both contracts use Solidity 0.8.28 and OpenZeppelin Contracts 5.6. Neither is up
 | `HVXToken` | [HVXToken.md](HVXToken.md) | BEP-20 token with an initial supply of 100 billion HVX, burns, EIP-2612 permit approvals and no admin |
 | `HVXVestingVault` | [HVXVestingVault.md](HVXVestingVault.md) | Holds allocations with fixed vesting terms; the foundation Safe owns the vault |
 
+For block deal buyers, see [Block deal schedules](BlockDeals.md).
+
 Examples use ethers.js v6. The foundation Safe calls owner functions through Safe Transaction Builder; the reference lists the required fields.
 
 ## Example setup

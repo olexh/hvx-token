@@ -1,0 +1,6 @@
+{
+  "name": "HVX Block Deals",
+  "description": "Lock HVX for block deal buyers in the HVX vesting vault: wallet, amount, unlock date and vesting.",
+  "iconPath": "logo.svg",
+  "icons": [{ "src": "logo.svg", "sizes": "any", "type": "image/svg+xml" }]
+}

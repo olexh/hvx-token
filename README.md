@@ -25,6 +25,22 @@ Vault ownership can be transferred in two steps or renounced permanently.
 
 Read each schedule's locked, vested, released and releasable amounts, along with vault totals, on BscScan.
 
+## Block deals
+
+Each block deal buyer gets their own non-revocable schedule. The schedule start is the buyer's unlock date, so nothing
+can be claimed before it. On that date a set share unlocks, and the rest can vest linearly after an optional pause.
+The [HVX Block Deals](demo/safe/) Safe App builds these schedules from a form: buyer wallet, HVX amount, unlock date and vesting.
+It checks the input, shows a plain-English summary and sends one batch (`approve` plus one `createSchedule` per buyer)
+to the Foundation Safe for signing.
+
+1. Send the buyers' HVX to the Foundation Safe.
+2. In the Safe at app.safe.global, open Apps → My custom apps → Add custom Safe App and paste
+   `https://olexh.github.io/hvx-token/safe/`. This is needed only once.
+3. Open HVX Block Deals in the Safe, add each buyer, tick the confirmation and press **Send to Safe for signing**.
+4. A second signer confirms and executes the transaction in the Safe queue. The HVX then moves into the vault, locked.
+
+Opened outside the Safe, the page downloads a Transaction Builder file instead.
+
 ## Quick start
 
 ```bash
@@ -39,6 +55,8 @@ npm run slither          # Requires Slither and solc 0.8.28 on PATH
 
 - [Contract reference](docs/README.md): token and vault functions, parameters, errors, events and ethers.js examples.
 - [Demo](demo/): wallet transfers, burns and vesting releases on BNB Smart Chain.
+- [HVX Block Deals](demo/safe/): Safe App that creates lock-up and vesting schedules for block deal buyers.
+- [Block deal schedules](docs/BlockDeals.md): step-by-step setup with the Safe App or Safe Transaction Builder.
 
 ## Mainnet
 
@@ -65,5 +83,5 @@ and [vault](https://testnet.bscscan.com/address/0x414e9FA80ED96BA5181B7ab1aCeBFc
 ## Security
 
 - The contracts use OpenZeppelin components, checked arithmetic, custom errors, checks-effects-interactions and `SafeERC20`.
-- The test suite has 38 TypeScript tests and 4 Solidity fuzz tests with 1,000 runs each. Both contracts have 100% line and statement coverage.
+- The test suite has 49 TypeScript tests and 4 Solidity fuzz tests with 1,000 runs each. Both contracts have 100% line and statement coverage.
 - Slither reports no findings under `--fail-pedantic` with the repository configuration. Time-based vesting checks and related equality checks have inline suppressions.
