@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>HiveX (HVX) — Demo</title>
+<title>HiveX (HVX) Dashboard</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-287.104 -287.104 574.208 574.208' width='1024' height='1024'%3E%3Cdefs%3E%3ClinearGradient id='metal' gradientUnits='userSpaceOnUse' x1='-180' y1='-190' x2='180' y2='190'%3E%3Cstop offset='0' stop-color='%23f4f5f6'/%3E%3Cstop offset='.35' stop-color='%23c9ccd0'/%3E%3Cstop offset='.55' stop-color='%23eef0f2'/%3E%3Cstop offset='1' stop-color='%23a9adb2'/%3E%3C/linearGradient%3E%3CradialGradient id='red' cx='.45' cy='.4' r='.75'%3E%3Cstop offset='0' stop-color='%23c8302b'/%3E%3Cstop offset='1' stop-color='%239a1f1c'/%3E%3C/radialGradient%3E%3C/defs%3E%3Crect x='-287.104' y='-287.104' width='574.208' height='574.208' fill='%230b0c0e'/%3E%3Cpolygon points='0.000,-164.608 77.603,-119.804 77.603,-30.196 0.000,14.608 -77.603,-30.196 -77.603,-119.804' fill='url(%23red)'/%3E%3Cpolygon points='-86.603,-14.608 -9.000,30.196 -9.000,119.804 -86.603,164.608 -164.205,119.804 -164.205,30.196' fill='url(%23red)'/%3E%3Cpolygon points='86.603,-14.608 164.205,30.196 164.205,119.804 86.603,164.608 9.000,119.804 9.000,30.196' fill='url(%23red)'/%3E%3Cpath d='M0.000,-185.392 L95.603,-130.196 L95.603,-19.804 L0.000,35.392 L-95.603,-19.804 L-95.603,-130.196Z M-86.603,-35.392 L9.000,19.804 L9.000,130.196 L-86.603,185.392 L-182.205,130.196 L-182.205,19.804Z M86.603,-35.392 L182.205,19.804 L182.205,130.196 L86.603,185.392 L-9.000,130.196 L-9.000,19.804Z M-77.603,-119.804 L-77.603,-30.196 L0.000,14.608 L77.603,-30.196 L77.603,-119.804 L0.000,-164.608Z M-164.205,30.196 L-164.205,119.804 L-86.603,164.608 L-9.000,119.804 L-9.000,30.196 L-86.603,-14.608Z M9.000,30.196 L9.000,119.804 L86.603,164.608 L164.205,119.804 L164.205,30.196 L86.603,-14.608Z' fill='url(%23metal)' fill-rule='nonzero'/%3E%3C/svg%3E">
 <style>
   :root {
@@ -27,7 +27,8 @@
   .chip.accent { color: var(--accent-ink); background: var(--accent-soft); border-color: transparent; }
   button { font: inherit; font-weight: 600; border: 0; background: var(--ink); color: #fff; padding: 9px 16px; border-radius: 10px; cursor: pointer; white-space: nowrap; }
   button.ghost { background: transparent; color: var(--ink); border: 1px solid var(--line); }
-  button.accent { background: var(--accent); }
+  button.accent { background: var(--accent); color: var(--ink); }
+  button.danger { background: var(--bad); }
   button.small { padding: 6px 12px; font-size: 13px; }
   button:disabled { opacity: 0.45; cursor: not-allowed; }
   button:focus-visible, input:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
@@ -61,13 +62,20 @@
   .rows { display: grid; gap: 6px; }
   .rowh { display: grid; grid-template-columns: 1.3fr 1fr 1.4fr auto; gap: 14px; align-items: center; padding: 12px 14px; border-radius: 12px; cursor: pointer; }
   .rowh:hover { background: var(--bg); }
-  .rowh .name { font-weight: 600; }
+  .rowh .name { background: none; color: inherit; padding: 0 0 0 18px; border-radius: 6px; text-align: left; white-space: normal; }
+  .tog { position: relative; }
+  .tog::before { content: ""; position: absolute; left: 2px; top: 8px; width: 6px; height: 6px; border: solid var(--muted); border-width: 0 1.5px 1.5px 0; transform: rotate(-45deg); transition: transform 0.15s; }
+  .tog[aria-expanded="true"]::before { transform: rotate(45deg); }
+  .group { font-size: 12px; font-weight: 600; color: var(--muted); padding: 12px 14px 0; }
+  .group:first-child { padding-top: 0; }
+  .more { background: none; color: var(--muted); font-size: 13px; padding: 10px 14px 10px 32px; text-align: left; }
+  .more::before { left: 16px; top: 16px; }
   .rowh .name small { display: block; color: var(--muted); font-weight: 400; font-size: 12px; }
   .bar { height: 6px; border-radius: 999px; background: var(--line); overflow: hidden; display: flex; }
   .bar i { display: block; height: 100%; }
   .bar .r { background: var(--ink); } .bar .a { background: var(--accent); }
   .rowh .avail { font-size: 13px; text-align: right; }
-  .rowd { display: none; padding: 4px 14px 14px 14px; font-size: 13px; color: var(--muted); }
+  .rowd { display: none; padding: 4px 14px 14px 32px; font-size: 13px; color: var(--muted); }
   .rowd.open { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 6px 20px; }
   .rowd b { color: var(--ink); font-weight: 500; }
   .rowd .wide { grid-column: 1 / -1; }
@@ -94,10 +102,10 @@
     .brand span { display: none; }
     main { padding: 8px 16px 60px; }
     .card { padding: 18px 18px; }
-    .hero { grid-template-columns: 1fr; } .hero > div { border: 0; padding: 8px 0; }
+    .hero > div { padding: 2px 0 2px 12px; } .hero .k { font-size: 10px; letter-spacing: 0.06em; } .hero .v { font-size: 24px; letter-spacing: -0.5px; } .hero .s { font-size: 11px; }
     .rowh { grid-template-columns: 1fr auto; gap: 6px 12px; }
     .rowh .bar, .legend { display: none; }
-    .rowh .chipcell { grid-column: 1; }
+    .rowh .chipcell { grid-column: 1; padding-left: 18px; }
     .rowh .avail { grid-column: 2; grid-row: 1 / span 2; }
     td:first-child { width: 110px; }
   }
@@ -115,20 +123,20 @@
       <div class="hero">
         <div><div class="k">Total supply</div><div class="v" id="sSupply">—</div></div>
         <div><div class="k">Burned</div><div class="v" id="sBurned">—</div></div>
-        <div><div class="k">Held in vesting</div><div class="v" id="sLocked">—</div><div class="s"><span id="sCirc">—</span> in holders' wallets</div></div>
+        <div><div class="k">In vesting</div><div class="v" id="sLocked">—</div><div class="s"><span id="sCirc">—</span> in holders' wallets</div></div>
       </div>
     </section>
 
     <section class="card" id="wallet">
       <h2>Your wallet</h2>
-      <div id="walletOff" class="empty">Connect MetaMask to send, burn and release HVX.</div>
+      <div id="walletOff" class="empty">Connect a wallet to send, burn and release HVX.</div>
       <div id="walletOn" hidden>
         <div class="wallet">
           <div><div class="bal"><span id="wHvx">—</span><small>HVX</small></div><div class="mono muted" id="wAddr"></div></div>
           <div class="actions">
-            <button class="ghost" id="addToken">Add to MetaMask</button>
-            <button class="ghost" data-panel="send">Send</button>
-            <button class="accent" data-panel="burn">Burn</button>
+            <button class="ghost" id="addToken">Add HVX to wallet</button>
+            <button data-panel="send">Send</button>
+            <button class="ghost" data-panel="burn">Burn</button>
           </div>
         </div>
         <div class="panel" id="p-send">
@@ -142,7 +150,7 @@
         <div class="panel" id="p-burn">
           <div class="field">
             <div><label for="bAmt">Amount to burn (HVX)</label><input id="bAmt" placeholder="1000" inputmode="decimal"></div>
-            <div class="btn"><button class="accent" id="bSend">Burn HVX</button></div>
+            <div class="btn"><button class="danger" id="bSend">Burn HVX</button></div>
           </div>
           <div class="note">Destroys your tokens permanently and lowers the total supply.</div>
         </div>
@@ -176,7 +184,7 @@
       </details>
     </section>
   </div>
-  <footer>Refreshes every 15 s · last update <span id="updated">—</span></footer>
+  <footer>Refreshes every 15 s · last update <span id="updated">—</span><span id="stale" hidden> · connection problem, retrying</span></footer>
 </main>
 <div class="toast" id="toast" role="status"></div>
 
@@ -188,8 +196,11 @@
   const TOKEN_ABI = ["function totalSupply() view returns (uint256)", "function totalBurned() view returns (uint256)", "function balanceOf(address) view returns (uint256)", "function transfer(address,uint256) returns (bool)", "function burn(uint256)", "error ERC20InsufficientBalance(address sender, uint256 balance, uint256 needed)", "error ERC20InvalidReceiver(address receiver)"];
   const VAULT_ABI = ["function scheduleCount() view returns (uint256)", "function totalCommitted() view returns (uint256)", "function getSchedule(uint256) view returns (tuple(address beneficiary,string label,uint256 total,uint256 released,uint64 start,uint64 cliffDuration,uint64 vestingDuration,uint64 revokedAt,uint16 initialUnlockBps,bool revocable,bool revoked))", "function vestedAmount(uint256) view returns (uint256)", "function releasableAmount(uint256) view returns (uint256)", "function lockedAmount(uint256) view returns (uint256)", "function vestingEnd(uint256) view returns (uint64)", "function release(uint256)", "error NothingToRelease()", "error UnknownSchedule(uint256 id)", "error AlreadyRevoked()"];
   const SAFE_ABI = ["function getOwners() view returns (address[])", "function getThreshold() view returns (uint256)"];
+  // Multicall3: reads every schedule in one eth_call. Public RPCs rate-limit large JSON-RPC batches.
+  const MULTICALL = "0xcA11bde05977b3631167028862bE2a173976CA11", MULTICALL_ABI = ["function aggregate3(tuple(address target, bool allowFailure, bytes callData)[] calls) view returns (tuple(bool success, bytes returnData)[])"];
+  const SCHEDULE_READS = ["getSchedule", "vestedAmount", "releasableAmount", "lockedAmount", "vestingEnd"];
   const rpc = new ethers.JsonRpcProvider(C.rpcUrl, C.chainId, { staticNetwork: true });
-  const token = new ethers.Contract(C.token, TOKEN_ABI, rpc), vault = new ethers.Contract(C.vault, VAULT_ABI, rpc), safe = new ethers.Contract(C.safe, SAFE_ABI, rpc);
+  const token = new ethers.Contract(C.token, TOKEN_ABI, rpc), vault = new ethers.Contract(C.vault, VAULT_ABI, rpc), safe = new ethers.Contract(C.safe, SAFE_ABI, rpc), multicall = new ethers.Contract(MULTICALL, MULTICALL_ABI, rpc);
 
   const $ = (id) => document.getElementById(id);
   const short = (a) => a.slice(0, 6) + "…" + a.slice(-4);
@@ -197,6 +208,8 @@
   const num = (w) => Number(ethers.formatUnits(w, 18));
   const hvx = (w, c = true) => `<span title="${full.format(num(w))} HVX">${(c ? compact : full).format(num(w))}</span>`;
   const when = (ts) => new Date(Number(ts) * 1000).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
+  const whenTime = (ts) => new Date(Number(ts) * 1000).toLocaleString(undefined, { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", timeZoneName: "short" });
+  const esc = (t) => t.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
   const dur = (s) => { const d = Number(s) / 86400; if (d === 0) return "none"; if (d % 365 === 0) { const y = d / 365; return y === 1 ? "1 year" : `${y} years`; } if (d % 30 === 0 && d < 365) return `${d / 30} months`; return `${d} days`; };
   const addr = (a, kind = "address") => `<a href="${C.explorer}/${kind}/${a}" target="_blank" rel="noopener" title="${a}">${short(a)}</a>`;
   let tt; const toast = (m, cls = "") => { const t = $("toast"); t.textContent = m; t.className = "toast " + cls; t.style.display = "block"; clearTimeout(tt); tt = setTimeout(() => t.style.display = "none", cls === "bad" ? 9000 : 5000); };
@@ -204,7 +217,7 @@
 
   // Turn wallet / contract errors into one plain sentence.
   const FRIENDLY = {
-    ACTION_REJECTED: "You cancelled the request in MetaMask.",
+    ACTION_REJECTED: "You cancelled the request in your wallet.",
     INSUFFICIENT_FUNDS: `Not enough ${C.chainId === 56 ? "BNB" : "tBNB"} to pay the network fee.`,
     NothingToRelease: "Nothing to release right now. Tokens unlock over time; check the row details.",
     ERC20InsufficientBalance: "Not enough HVX in this wallet.",
@@ -227,8 +240,13 @@
       await window.ethereum.request({ method: "wallet_addEthereumChain", params: [{ chainId: chainHex, chainName: C.chainName, nativeCurrency: { name: "BNB", symbol: C.chainId === 56 ? "BNB" : "tBNB", decimals: 18 }, rpcUrls: [C.rpcUrl], blockExplorerUrls: [C.explorer] }] });
     }
   }
-  $("connect").onclick = async () => {
-    if (!window.ethereum) return toast("No wallet found. Install the MetaMask browser extension, then reload this page.", "bad");
+  const mobile = /Android|iPhone|iPad/i.test(navigator.userAgent);
+  const NO_WALLET = mobile ? "No wallet found. Open this page in your wallet app's browser." : "No wallet found. Install a browser wallet such as MetaMask or Trust Wallet, then reload this page.";
+  if (!window.ethereum) $("walletOff").innerHTML = mobile
+    ? `To send, burn and release HVX, open this page in your wallet app: <a href="https://metamask.app.link/dapp/${location.host + location.pathname}">MetaMask</a> · <a href="https://link.trustwallet.com/open_url?coin_id=20000714&url=${encodeURIComponent(location.href)}">Trust Wallet</a>`
+    : NO_WALLET;
+  async function connect() {
+    if (!window.ethereum) { toast(NO_WALLET, "bad"); return false; }
     try {
       await ensureChain();
       const bp = new ethers.BrowserProvider(window.ethereum);
@@ -237,23 +255,26 @@
       $("connect").textContent = short(me); $("connect").title = me;
       $("walletOff").hidden = true; $("walletOn").hidden = false; $("wAddr").innerHTML = addr(me);
       await refresh();
-    } catch (e) { toast("Could not connect: " + explain(e), "bad"); }
-  };
-  $("addToken").onclick = () => window.ethereum.request({ method: "wallet_watchAsset", params: { type: "ERC20", options: { address: C.token, symbol: "HVX", decimals: 18 } } }).then((ok) => { if (ok) toast("HVX added to MetaMask", "ok"); }).catch((e) => toast(explain(e), "bad"));
+      return true;
+    } catch (e) { toast("Could not connect: " + explain(e), "bad"); return false; }
+  }
+  $("connect").onclick = connect;
+  $("addToken").onclick = () => window.ethereum.request({ method: "wallet_watchAsset", params: { type: "ERC20", options: { address: C.token, symbol: "HVX", decimals: 18 } } }).then((ok) => { if (ok) toast("HVX added to your wallet", "ok"); }).catch((e) => toast(explain(e), "bad"));
   window.ethereum?.on?.("accountsChanged", () => location.reload());
   window.ethereum?.on?.("chainChanged", () => location.reload());
 
-  document.addEventListener("click", (e) => {
+  document.addEventListener("click", async (e) => {
     const p = e.target.closest("[data-panel]"); if (p) { for (const el of document.querySelectorAll(".panel")) el.classList.toggle("open", el.id === "p-" + p.dataset.panel && !el.classList.contains("open")); return; }
-    const r = e.target.closest("[data-row]"); if (r && !e.target.closest("button")) { $("d-" + r.dataset.row).classList.toggle("open"); return; }
-    const rel = e.target.closest("[data-release]"); if (rel) send("Release", () => vault.connect(signer).release(BigInt(rel.dataset.release)), `Released ${rel.dataset.label} tokens`);
+    if (e.target.closest("[data-done]")) { showDone = !showDone; render(); return; }
+    const rel = e.target.closest("[data-release]"); if (rel) { if (!signer && !(await connect())) return; send("Release", () => vault.connect(signer).release(BigInt(rel.dataset.release)), `Released ${esc(rel.dataset.label)} tokens`); return; }
+    const r = e.target.closest("[data-row]"); if (r) { const id = r.dataset.row, on = !open.has(id); on ? open.add(id) : open.delete(id); $("d-" + id).classList.toggle("open", on); r.querySelector(".name").setAttribute("aria-expanded", on); }
   });
 
   const log = [];
   async function send(label, fn, text) {
     if (!signer) return toast("Connect your wallet first.", "bad");
     try {
-      toast(label + ": confirm in MetaMask…");
+      toast(label + ": confirm in your wallet…");
       const tx = await fn(); toast(label + ": sent, waiting for the network to confirm…");
       await tx.wait();
       toast(label + " confirmed", "ok");
@@ -279,10 +300,49 @@
   const status = (s, vested, releasable, now) =>
     s.revoked ? ["Revoked", "warn", "The unvested part went back to the treasury. Anything vested before that stays with the beneficiary."]
     : s.released === s.total ? ["Fully released", "ok", "Every token in this schedule has been paid out."]
-    : vested === s.total ? ["Fully unlocked", "ok", "Everything has vested and is waiting to be released."]
-    : now < s.start ? ["Not started", "", "Vesting starts at the launch date."]
-    : now < s.start + s.cliffDuration ? (releasable > 0n ? ["Cliff · launch unlock ready", "accent", "During the cliff only the launch unlock can be released."] : ["Cliff", "warn", "Nothing unlocks until the cliff ends."])
+    : vested === s.total ? ["Ready to release", "accent", "Everything has unlocked and is waiting to be released."]
+    : now < s.start ? ["Locked", "", `Locked until ${whenTime(s.start)}. Nothing can be released before then.`]
+    : now < s.start + s.cliffDuration ? (releasable > 0n ? ["Cliff · initial unlock ready", "accent", "During the cliff only the initial unlock can be released."] : ["Cliff", "warn", "Nothing unlocks until the cliff ends."])
     : ["Vesting", "accent", "Tokens unlock gradually every second."];
+  const isMine = (s) => !!me && s.beneficiary.toLowerCase() === me.toLowerCase();
+  const isDeal = (s) => /^block deal/i.test(s.label);
+  // Paid out in full, or revoked with nothing left to claim. The viewer's own schedules always stay visible.
+  const isDone = ({ s, releasable }) => releasable === 0n && (s.released === s.total || s.revoked) && !isMine(s);
+  const open = new Set(); let data = null, showDone = false, failing = false;
+  function row({ i, s, vested, releasable, locked, end }) {
+    const [st, cls, why] = status(s, vested, releasable, data.now), mine = isMine(s), isOpen = open.has(String(i));
+    const pr = Number(s.released * 1000n / s.total) / 10, pa = Number(releasable * 1000n / s.total) / 10;
+    const label = esc(s.label), date = data.now < s.start ? whenTime : when;
+    const bps = Number(s.initialUnlockBps), cliff = s.cliffDuration > 0n, linear = s.vestingDuration > 0n, atOnce = bps === 10000 || (!cliff && !linear);
+    const terms = atOnce ? [`Unlocks <b>100%</b> on <b>${date(s.start)}</b>`] : [
+      bps > 0 ? `Initial unlock <b>${bps / 100}%</b> on <b>${date(s.start)}</b>` : `Starts on <b>${date(s.start)}</b>`,
+      (cliff ? `Cliff <b>${dur(s.cliffDuration)}</b> · then ` : "") + (linear ? `${cliff ? "vests" : "Vests"} over <b>${dur(s.vestingDuration)}</b>` : "the rest unlocks at once"),
+    ];
+    if (s.revoked) terms.push(`Revoked on <b>${when(s.revokedAt)}</b>`); else if (!atOnce) terms.push(`Fully unlocked on <b>${when(end)}</b>`);
+    return `<div class="rowh" data-row="${i}">
+      <button class="name tog" aria-expanded="${isOpen}" aria-controls="d-${i}">${label}<small>${hvx(s.total, false)} HVX</small></button>
+      <div class="chipcell"><span class="chip ${cls}" title="${why}">${st}</span></div>
+      <div class="bar" title="Released ${pr}% · ready ${pa}%"><i class="r" style="width:${pr}%"></i><i class="a" style="width:${pa}%"></i></div>
+      <div class="avail">${releasable > 0n ? `<button class="small ${mine ? "accent" : "ghost"}" data-release="${i}" data-label="${label}">Release ${hvx(releasable)}</button>` : `<span class="muted">Nothing to release</span>`}</div>
+    </div>
+    <div class="rowd${isOpen ? " open" : ""}" id="d-${i}">
+      <div class="wide">${why}</div>
+      <div>Beneficiary <b>${addr(s.beneficiary)}</b></div>
+      <div>Released <b>${hvx(s.released)}</b> · still locked <b>${hvx(locked)}</b></div>
+      ${terms.map((t) => `<div>${t}</div>`).join("")}
+      <div>${s.revocable ? "Foundation <b>can revoke</b> the unvested part" : "<b>Cannot</b> be revoked"}</div>
+    </div>`;
+  }
+  function render() {
+    const live = data.rows.filter((r) => !isDone(r)), done = data.rows.filter(isDone);
+    const groups = [["Your schedules", live.filter((r) => isMine(r.s))], ["Allocations", live.filter((r) => !isMine(r.s) && !isDeal(r.s))], ["Block deals", live.filter((r) => !isMine(r.s) && isDeal(r.s))]].filter(([, list]) => list.length);
+    // The list is rebuilt on every refresh; keep keyboard focus where it was.
+    const a = document.activeElement, focus = !$("rows").contains(a) ? null : a.dataset.release ? `[data-release="${a.dataset.release}"]` : a.dataset.done !== undefined ? "[data-done]" : `[data-row="${a.closest("[data-row]")?.dataset.row}"] .name`;
+    $("rows").innerHTML = (data.rows.length ? "" : '<div class="empty">No schedules yet.</div>')
+      + groups.map(([title, list]) => (groups.length > 1 || title === "Your schedules" ? `<div class="group">${title}</div>` : "") + list.map(row).join("")).join("")
+      + (done.length ? `<button class="more tog" data-done aria-expanded="${showDone}">Completed (${done.length})</button>` + (showDone ? done.map(row).join("") : "") : "");
+    if (focus) $("rows").querySelector(focus)?.focus();
+  }
   async function refresh() {
     try {
       const [supply, burned, committed, safeBal, count, owners, thr, block] = await Promise.all([token.totalSupply(), token.totalBurned(), vault.totalCommitted(), token.balanceOf(C.safe), vault.scheduleCount(), safe.getOwners(), safe.getThreshold(), rpc.getBlock("latest")]);
@@ -292,33 +352,16 @@
       $("cSafeBal").innerHTML = hvx(safeBal, false) + " HVX";
       if (me) { const [b, g] = await Promise.all([token.balanceOf(me), rpc.getBalance(me)]); $("wHvx").innerHTML = hvx(b, false); $("gasNote").textContent = `Network fee balance: ${Number(ethers.formatEther(g)).toFixed(4)} ${C.chainId === 56 ? "BNB" : "tBNB"}`; }
 
-      const rows = await Promise.all([...Array(Number(count)).keys()].map(async (i) => { const [s, vested, releasable, locked, end] = await Promise.all([vault.getSchedule(i), vault.vestedAmount(i), vault.releasableAmount(i), vault.lockedAmount(i), vault.vestingEnd(i)]); return { i, s, vested, releasable, locked, end }; }));
-      rows.sort((a, b) => (me && b.s.beneficiary.toLowerCase() === me.toLowerCase()) - (me && a.s.beneficiary.toLowerCase() === me.toLowerCase()) || a.i - b.i);
-      $("rows").innerHTML = rows.map(({ i, s, vested, releasable, locked, end }) => {
-        const [st, cls, why] = status(s, vested, releasable, now), mine = me && s.beneficiary.toLowerCase() === me.toLowerCase();
-        const pr = Number(s.released * 1000n / s.total) / 10, pa = Number(releasable * 1000n / s.total) / 10;
-        const label = s.label.replace(/"/g, "&quot;");
-        return `<div class="rowh" data-row="${i}">
-          <div class="name">${s.label}${mine ? ' <span class="chip accent" style="padding:1px 8px">yours</span>' : ""}<small>${hvx(s.total, false)} HVX</small></div>
-          <div class="chipcell"><span class="chip ${cls}" title="${why}">${st}</span></div>
-          <div class="bar" title="Released ${pr}% · ready ${pa}%"><i class="r" style="width:${pr}%"></i><i class="a" style="width:${pa}%"></i></div>
-          <div class="avail">${releasable > 0n ? `<button class="small ${mine ? "accent" : "ghost"}" data-release="${i}" data-label="${label}" ${me ? "" : 'disabled title="Connect a wallet to release"'}>Release ${hvx(releasable)}</button>` : `<span class="muted">Nothing to release</span>`}</div>
-        </div>
-        <div class="rowd" id="d-${i}">
-          <div class="wide">${why}</div>
-          <div>Beneficiary <b>${addr(s.beneficiary)}</b></div>
-          <div>Released <b>${hvx(s.released)}</b> · still locked <b>${hvx(locked)}</b></div>
-          <div>Launch unlock <b>${Number(s.initialUnlockBps) / 100}%</b> on <b>${when(s.start)}</b></div>
-          <div>Cliff <b>${dur(s.cliffDuration)}</b> · then vests over <b>${dur(s.vestingDuration)}</b></div>
-          <div>${s.revoked ? `Revoked on <b>${when(s.revokedAt)}</b>` : `Fully unlocked on <b>${when(end)}</b>`}</div>
-          <div>${s.revocable ? "Foundation <b>can revoke</b> the unvested part" : "<b>Cannot</b> be revoked"}</div>
-        </div>`;
-      }).join("");
-      $("updated").textContent = new Date().toLocaleTimeString();
+      const ids = [...Array(Number(count)).keys()];
+      const reads = await multicall.aggregate3(ids.flatMap((i) => SCHEDULE_READS.map((fn) => ({ target: C.vault, allowFailure: false, callData: vault.interface.encodeFunctionData(fn, [i]) }))));
+      const rows = ids.map((i) => { const [s, vested, releasable, locked, end] = SCHEDULE_READS.map((fn, j) => vault.interface.decodeFunctionResult(fn, reads[i * SCHEDULE_READS.length + j].returnData)[0]); return { i, s, vested, releasable, locked, end }; });
+      data = { rows, now }; render();
+      $("updated").textContent = new Date().toLocaleTimeString(); $("stale").hidden = true; failing = false;
     } catch (e) {
       console.error(e);
-      if ($("rows").querySelector(".empty")) $("rows").innerHTML = '<div class="empty">Could not load data from the blockchain. Check your internet connection; the page retries every 15 seconds.</div>';
-      toast("Could not load chain data: " + explain(e), "bad");
+      if (!data) $("rows").innerHTML = '<div class="empty">Could not load data from the blockchain. The page retries every 15 seconds.</div>';
+      if (!failing) toast("Could not load data from the blockchain. Retrying every 15 seconds.", "bad");
+      failing = true; $("stale").hidden = false;
     }
   }
   await refresh(); setInterval(refresh, 15000);
