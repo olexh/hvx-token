@@ -54,7 +54,8 @@ npm run slither          # Requires Slither and solc 0.8.28 on PATH
 ## Documentation
 
 - [Contract reference](docs/README.md): token and vault functions, parameters, errors, events and ethers.js examples.
-- [Demo](demo/): wallet transfers, burns and vesting releases on BNB Smart Chain.
+- [Demo](demo/): allocation lookup by wallet address, wallet transfers, burns and vesting releases on BNB Smart Chain.
+  `?address=<wallet>` opens one wallet's allocation directly.
 - [HVX Block Deals](demo/safe/): Safe App that creates lock-up and vesting schedules for block deal buyers.
 - [Block deal schedules](docs/BlockDeals.md): step-by-step setup with the Safe App or Safe Transaction Builder.
 

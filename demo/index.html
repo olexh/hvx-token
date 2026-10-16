@@ -80,6 +80,15 @@
   .rowd b { color: var(--ink); font-weight: 500; }
   .rowd .wide { grid-column: 1 / -1; }
   .legend { display: flex; gap: 16px; font-size: 12px; color: var(--muted); margin-top: 12px; }
+  /* allocation lookup */
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; margin-top: 14px; }
+  .stats > div { background: var(--bg); border-radius: 12px; padding: 12px 14px; }
+  .stats .k { font-size: 12px; color: var(--muted); }
+  .stats .v { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; overflow-wrap: anywhere; }
+  .sched { margin-top: 18px; }
+  .shead { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .shead b { margin-right: 8px; }
+  .share { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--line); }
   .legend i { display: inline-block; width: 10px; height: 6px; border-radius: 999px; margin-right: 5px; vertical-align: middle; }
   /* misc */
   details summary { cursor: pointer; list-style: none; display: flex; justify-content: space-between; font-weight: 600; }
@@ -124,6 +133,23 @@
         <div><div class="k">Total supply</div><div class="v" id="sSupply">—</div></div>
         <div><div class="k">Burned</div><div class="v" id="sBurned">—</div></div>
         <div><div class="k">In vesting</div><div class="v" id="sLocked">—</div><div class="s"><span id="sCirc">—</span> in holders' wallets</div></div>
+      </div>
+    </section>
+
+    <section class="card" id="lookup">
+      <h2>Check your allocation</h2>
+      <form class="field" id="lForm">
+        <div style="flex:3 1 260px"><label for="lAddr">Wallet address</label><input id="lAddr" class="mono" placeholder="0x…" autocomplete="off" spellcheck="false"></div>
+        <div class="btn"><button>Check</button></div>
+      </form>
+      <div class="note">See the HVX allocated to a wallet, its lock-up dates and what can be released. No wallet connection needed.</div>
+      <div id="lResult" hidden></div>
+      <div class="share" id="lShare" hidden>
+        <div class="field">
+          <div style="flex:3 1 260px"><label for="lLink">Personal link</label><input id="lLink" class="mono" readonly></div>
+          <div class="btn"><button class="ghost" id="lCopy" type="button">Copy link</button></div>
+        </div>
+        <div class="note">Opens this allocation directly. Bookmark it or send it to the wallet owner.</div>
       </div>
     </section>
 
@@ -242,9 +268,11 @@
   }
   const mobile = /Android|iPhone|iPad/i.test(navigator.userAgent);
   const NO_WALLET = mobile ? "No wallet found. Open this page in your wallet app's browser." : "No wallet found. Install a browser wallet such as MetaMask or Trust Wallet, then reload this page.";
-  if (!window.ethereum) $("walletOff").innerHTML = mobile
-    ? `To send, burn and release HVX, open this page in your wallet app: <a href="https://metamask.app.link/dapp/${location.host + location.pathname}">MetaMask</a> · <a href="https://link.trustwallet.com/open_url?coin_id=20000714&url=${encodeURIComponent(location.href)}">Trust Wallet</a>`
-    : NO_WALLET;
+  // Wallet app links carry the current ?address= so a personal link opens the same allocation inside the app.
+  const walletLinks = () => { if (!window.ethereum) $("walletOff").innerHTML = mobile
+    ? `To send, burn and release HVX, open this page in your wallet app: <a href="https://metamask.app.link/dapp/${location.host + location.pathname + location.search}">MetaMask</a> · <a href="https://link.trustwallet.com/open_url?coin_id=20000714&url=${encodeURIComponent(location.href)}">Trust Wallet</a>`
+    : NO_WALLET; };
+  walletLinks();
   async function connect() {
     if (!window.ethereum) { toast(NO_WALLET, "bad"); return false; }
     try {
@@ -309,16 +337,20 @@
   // Paid out in full, or revoked with nothing left to claim. The viewer's own schedules always stay visible.
   const isDone = ({ s, releasable }) => releasable === 0n && (s.released === s.total || s.revoked) && !isMine(s);
   const open = new Set(); let data = null, showDone = false, failing = false;
-  function row({ i, s, vested, releasable, locked, end }) {
-    const [st, cls, why] = status(s, vested, releasable, data.now), mine = isMine(s), isOpen = open.has(String(i));
-    const pr = Number(s.released * 1000n / s.total) / 10, pa = Number(releasable * 1000n / s.total) / 10;
-    const label = esc(s.label), date = data.now < s.start ? whenTime : when;
+  function termsOf(s, end) {
+    const date = data.now < s.start ? whenTime : when;
     const bps = Number(s.initialUnlockBps), cliff = s.cliffDuration > 0n, linear = s.vestingDuration > 0n, atOnce = bps === 10000 || (!cliff && !linear);
     const terms = atOnce ? [`Unlocks <b>100%</b> on <b>${date(s.start)}</b>`] : [
       bps > 0 ? `Initial unlock <b>${bps / 100}%</b> on <b>${date(s.start)}</b>` : `Starts on <b>${date(s.start)}</b>`,
       (cliff ? `Cliff <b>${dur(s.cliffDuration)}</b> · then ` : "") + (linear ? `${cliff ? "vests" : "Vests"} over <b>${dur(s.vestingDuration)}</b>` : "the rest unlocks at once"),
     ];
     if (s.revoked) terms.push(`Revoked on <b>${when(s.revokedAt)}</b>`); else if (!atOnce) terms.push(`Fully unlocked on <b>${when(end)}</b>`);
+    return terms;
+  }
+  function row({ i, s, vested, releasable, locked, end }) {
+    const [st, cls, why] = status(s, vested, releasable, data.now), mine = isMine(s), isOpen = open.has(String(i));
+    const pr = Number(s.released * 1000n / s.total) / 10, pa = Number(releasable * 1000n / s.total) / 10;
+    const label = esc(s.label), terms = termsOf(s, end);
     return `<div class="rowh" data-row="${i}">
       <button class="name tog" aria-expanded="${isOpen}" aria-controls="d-${i}">${label}<small>${hvx(s.total, false)} HVX</small></button>
       <div class="chipcell"><span class="chip ${cls}" title="${why}">${st}</span></div>
@@ -327,7 +359,7 @@
     </div>
     <div class="rowd${isOpen ? " open" : ""}" id="d-${i}">
       <div class="wide">${why}</div>
-      <div>Beneficiary <b>${addr(s.beneficiary)}</b></div>
+      <div>Beneficiary <b>${addr(s.beneficiary)}</b> · <a href="?address=${s.beneficiary}">personal link</a></div>
       <div>Released <b>${hvx(s.released)}</b> · still locked <b>${hvx(locked)}</b></div>
       ${terms.map((t) => `<div>${t}</div>`).join("")}
       <div>${s.revocable ? "Foundation <b>can revoke</b> the unvested part" : "<b>Cannot</b> be revoked"}</div>
@@ -343,6 +375,57 @@
       + (done.length ? `<button class="more tog" data-done aria-expanded="${showDone}">Completed (${done.length})</button>` + (showDone ? done.map(row).join("") : "") : "");
     if (focus) $("rows").querySelector(focus)?.focus();
   }
+
+  // ----- allocation lookup: read-only, works without a wallet. ?address=0x… opens it directly.
+  let target = null;
+  const lookupStatus = ({ s, releasable, locked, end }, now) =>
+    releasable > 0n ? ["Ready to release", "accent", "Unlocked HVX is waiting to be released to this wallet."]
+    : locked === 0n ? ["Completed", "ok", s.revoked ? "This schedule was revoked and everything vested has been released." : "Every token in this allocation has been released."]
+    : now < s.start ? ["Locked", "", `Locked until ${whenTime(s.start)}. Nothing can be released before then.`]
+    : now < s.start + s.cliffDuration ? ["Locked", "", `Next unlock on ${whenTime(s.start + s.cliffDuration)}.`]
+    : ["Locked", "", `Unlocks gradually until ${whenTime(end)}.`];
+  function renderLookup() {
+    $("lResult").hidden = !target; $("lShare").hidden = true;
+    if (!target) return;
+    if (!data) { $("lResult").innerHTML = `<div class="sched empty">${failing ? "Could not load data from the blockchain. The page retries every 15 seconds." : "Loading…"}</div>`; return; }
+    // Ready to release first, then locked, then completed.
+    const rank = (r) => r.releasable > 0n ? 0 : r.locked > 0n ? 1 : 2;
+    const list = data.rows.filter((r) => r.s.beneficiary.toLowerCase() === target.toLowerCase()).sort((x, y) => rank(x) - rank(y)), who = `<span class="mono">${addr(target)}</span>`;
+    if (!list.length) { $("lResult").innerHTML = `<div class="sched empty">No HVX allocation is registered to ${who}. Check the address, or ask the HVX Foundation which wallet your allocation was registered to.</div>`; return; }
+    const sum = (f) => list.reduce((t, r) => t + f(r), 0n), stat = (k, w) => `<div><div class="k">${k}</div><div class="v">${hvx(w, false)}</div></div>`;
+    const a = document.activeElement, keep = $("lResult").contains(a) ? a.dataset.release : null;
+    $("lResult").innerHTML = `<div class="stats">${stat("Total allocated HVX", sum((r) => r.s.total))}${stat("Currently locked HVX", sum((r) => r.locked))}${stat("Available to release HVX", sum((r) => r.releasable))}</div>`
+      + list.map((r) => {
+        const { i, s, releasable, end } = r, [st, cls, why] = lookupStatus(r, data.now), label = esc(s.label);
+        return `<div class="sched">
+          <div class="shead"><div><b>${label}</b><span class="chip ${cls}">${st}</span></div>${releasable > 0n ? `<button class="small accent" data-release="${i}" data-label="${label}">Release ${hvx(releasable, false)} HVX</button>` : ""}</div>
+          <table>
+            <tr><td>Status</td><td>${why}</td></tr>
+            <tr><td>Vesting start</td><td>${whenTime(s.start)}</td></tr>
+            <tr><td>Vesting end</td><td>${whenTime(end)}</td></tr>
+            <tr><td>Terms</td><td>${termsOf(s, end).join(" · ")}</td></tr>
+            <tr><td>Released so far</td><td>${hvx(s.released, false)} HVX</td></tr>
+          </table>
+        </div>`;
+      }).join("")
+      + `<div class="note">Read live from the vesting vault ${addr(C.vault)} on ${C.chainName}, schedule ${list.map((r) => "#" + r.i).join(", ")} · <a href="${C.explorer}/address/${C.vault}#readContract" target="_blank" rel="noopener">verify on BscScan</a>. Anyone can press Release: the HVX always goes to ${who}, and the wallet that presses it pays the network fee.</div>`;
+    $("lShare").hidden = false; $("lLink").value = location.origin + location.pathname + "?address=" + target;
+    if (keep) $("lResult").querySelector(`[data-release="${keep}"]`)?.focus();
+  }
+  function lookup(value) {
+    value = value.trim();
+    if (value && !ethers.isAddress(value)) { toast("Check the wallet address: it starts with 0x followed by 40 letters and numbers.", "bad"); return; }
+    target = value ? ethers.getAddress(value) : null; $("lAddr").value = target ?? "";
+    history.replaceState(null, "", location.pathname + (target ? "?address=" + target : "") + location.hash);
+    walletLinks(); renderLookup();
+  }
+  $("lForm").onsubmit = (e) => { e.preventDefault(); lookup($("lAddr").value); };
+  $("lLink").onfocus = () => $("lLink").select();
+  $("lCopy").onclick = () => Promise.resolve().then(() => navigator.clipboard.writeText($("lLink").value))
+    // Some in-wallet browsers block the Clipboard API; fall back to copying the selected field.
+    .then(() => toast("Link copied", "ok"), () => { $("lLink").focus(); document.execCommand("copy") ? toast("Link copied", "ok") : toast("Copy the selected link."); });
+  const linked = new URLSearchParams(location.search).get("address");
+  if (linked) { $("lAddr").value = linked; lookup(linked); }
   async function refresh() {
     try {
       const [supply, burned, committed, safeBal, count, owners, thr, block] = await Promise.all([token.totalSupply(), token.totalBurned(), vault.totalCommitted(), token.balanceOf(C.safe), vault.scheduleCount(), safe.getOwners(), safe.getThreshold(), rpc.getBlock("latest")]);
@@ -355,13 +438,14 @@
       const ids = [...Array(Number(count)).keys()];
       const reads = await multicall.aggregate3(ids.flatMap((i) => SCHEDULE_READS.map((fn) => ({ target: C.vault, allowFailure: false, callData: vault.interface.encodeFunctionData(fn, [i]) }))));
       const rows = ids.map((i) => { const [s, vested, releasable, locked, end] = SCHEDULE_READS.map((fn, j) => vault.interface.decodeFunctionResult(fn, reads[i * SCHEDULE_READS.length + j].returnData)[0]); return { i, s, vested, releasable, locked, end }; });
-      data = { rows, now }; render();
+      data = { rows, now }; render(); renderLookup();
       $("updated").textContent = new Date().toLocaleTimeString(); $("stale").hidden = true; failing = false;
     } catch (e) {
       console.error(e);
       if (!data) $("rows").innerHTML = '<div class="empty">Could not load data from the blockchain. The page retries every 15 seconds.</div>';
       if (!failing) toast("Could not load data from the blockchain. Retrying every 15 seconds.", "bad");
       failing = true; $("stale").hidden = false;
+      if (!data) renderLookup();
     }
   }
   await refresh(); setInterval(refresh, 15000);
