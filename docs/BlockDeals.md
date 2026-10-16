@@ -126,7 +126,11 @@ A schedule can't be changed or cancelled after execution.
 Open the dashboard at `https://olexh.github.io/hvx-token/?address=<buyer wallet>`. It shows the buyer's total
 allocation, locked and releasable HVX, vesting start and end dates and status (Locked, Ready to release or Completed),
 read live from the vault. No wallet connection is needed. Send this link to the buyer so they can check their
-allocation themselves; the dashboard's **Copy link** button and each schedule's details give the same link.
+allocation themselves. The buyer page shows only the allocation for the address entered.
+
+The full overview of all schedules is at `https://olexh.github.io/hvx-token/?view=admin`. Each schedule's
+details there have a **view allocation** link that opens the buyer's page, and that page's **Copy link** button gives
+the link to send.
 
 To check on BscScan instead, open the vault → Contract → Read Contract:
 
