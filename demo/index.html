@@ -85,9 +85,16 @@
   .stats > div { background: var(--bg); border-radius: 12px; padding: 12px 14px; }
   .stats .k { font-size: 12px; color: var(--muted); }
   .stats .v { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; overflow-wrap: anywhere; }
-  .sched { margin-top: 18px; }
+  .stats .hl { background: var(--accent-soft); }
+  .stats .hl .k { color: var(--accent-ink); }
+  .sched { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--line); }
   .shead { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
   .shead b { margin-right: 8px; }
+  .why { margin: 6px 0 0; font-size: 14px; color: var(--muted); }
+  .facts { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 20px; margin: 14px 0 0; }
+  .facts dt { font-size: 12px; color: var(--muted); }
+  .facts dd { margin: 2px 0 0; font-size: 14px; }
+  .lfield > div:first-child { flex: 1 1 0; min-width: 0; }
   .share { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--line); }
   .legend i { display: inline-block; width: 10px; height: 6px; border-radius: 999px; margin-right: 5px; vertical-align: middle; }
   /* misc */
@@ -117,6 +124,13 @@
     .rowh .chipcell { grid-column: 1; padding-left: 18px; }
     .rowh .avail { grid-column: 2; grid-row: 1 / span 2; }
     td:first-child { width: 110px; }
+    .stats { gap: 6px; }
+    .stats > div, .facts > div { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+    .stats > div { padding: 10px 12px; }
+    .stats .v { font-size: 17px; text-align: right; }
+    .facts { grid-template-columns: 1fr; gap: 8px; }
+    .facts dt { white-space: nowrap; }
+    .facts dd { text-align: right; }
   }
 </style>
 </head>
@@ -138,18 +152,18 @@
 
     <section class="card" id="lookup">
       <h2>Check your allocation</h2>
-      <form class="field" id="lForm">
-        <div style="flex:3 1 260px"><label for="lAddr">Wallet address</label><input id="lAddr" class="mono" placeholder="0x…" autocomplete="off" spellcheck="false"></div>
+      <form class="field lfield" id="lForm">
+        <div><label for="lAddr">Wallet address</label><input id="lAddr" class="mono" placeholder="0x…" autocomplete="off" spellcheck="false"></div>
         <div class="btn"><button>Check</button></div>
       </form>
-      <div class="note">See the HVX allocated to a wallet, its lock-up dates and what can be released. No wallet connection needed.</div>
+      <div class="note" id="lHint">Enter a wallet address to see its HVX allocation and lock-up dates. No wallet connection needed.</div>
       <div id="lResult" hidden></div>
       <div class="share" id="lShare" hidden>
-        <div class="field">
-          <div style="flex:3 1 260px"><label for="lLink">Personal link</label><input id="lLink" class="mono" readonly></div>
+        <div class="field lfield">
+          <div><label for="lLink">Personal link</label><input id="lLink" class="mono" readonly></div>
           <div class="btn"><button class="ghost" id="lCopy" type="button">Copy link</button></div>
         </div>
-        <div class="note">Opens this allocation directly. Bookmark it or send it to the wallet owner.</div>
+        <div class="note">Save this link to check this allocation any time, no wallet needed.</div>
       </div>
     </section>
 
@@ -359,7 +373,7 @@
     </div>
     <div class="rowd${isOpen ? " open" : ""}" id="d-${i}">
       <div class="wide">${why}</div>
-      <div>Beneficiary <b>${addr(s.beneficiary)}</b> · <a href="?address=${s.beneficiary}">personal link</a></div>
+      <div>Beneficiary <b>${addr(s.beneficiary)}</b> · <a href="?address=${s.beneficiary}#lookup">view allocation</a></div>
       <div>Released <b>${hvx(s.released)}</b> · still locked <b>${hvx(locked)}</b></div>
       ${terms.map((t) => `<div>${t}</div>`).join("")}
       <div>${s.revocable ? "Foundation <b>can revoke</b> the unvested part" : "<b>Cannot</b> be revoked"}</div>
@@ -378,37 +392,50 @@
 
   // ----- allocation lookup: read-only, works without a wallet. ?address=0x… opens it directly.
   let target = null;
-  const lookupStatus = ({ s, releasable, locked, end }, now) =>
-    releasable > 0n ? ["Ready to release", "accent", "Unlocked HVX is waiting to be released to this wallet."]
-    : locked === 0n ? ["Completed", "ok", s.revoked ? "This schedule was revoked and everything vested has been released." : "Every token in this allocation has been released."]
-    : now < s.start ? ["Locked", "", `Locked until ${whenTime(s.start)}. Nothing can be released before then.`]
-    : now < s.start + s.cliffDuration ? ["Locked", "", `Next unlock on ${whenTime(s.start + s.cliffDuration)}.`]
-    : ["Locked", "", `Unlocks gradually until ${whenTime(end)}.`];
+  const rel = new Intl.RelativeTimeFormat("en", { numeric: "auto" });
+  const fromNow = (ts) => { const sec = Number(ts - data.now); return sec < 3600 ? rel.format(Math.max(1, Math.round(sec / 60)), "minute") : sec < 172800 ? rel.format(Math.round(sec / 3600), "hour") : rel.format(Math.round(sec / 86400), "day"); };
+  const unlockTerms = (s) => {
+    const pct = Number(s.initialUnlockBps) / 100, cliff = s.cliffDuration > 0n, linear = s.vestingDuration > 0n;
+    if (pct === 100 || (!cliff && !linear)) return "100% at vesting start";
+    const parts = pct ? [`${pct}% at vesting start`] : [];
+    if (!linear) parts.push(`${pct ? "the rest" : "100%"} ${dur(s.cliffDuration)} after vesting start`);
+    else { if (cliff) parts.push(`${dur(s.cliffDuration)} pause`); parts.push(`${pct ? "the rest " : ""}gradually over ${dur(s.vestingDuration)}`); }
+    const t = parts.join(", then "); return t[0].toUpperCase() + t.slice(1);
+  };
+  // Status, chip style and one plain sentence on what happens next.
+  function lookupStatus({ s, releasable, locked, end }, now) {
+    const cliffEnd = s.start + s.cliffDuration, linear = s.vestingDuration > 0n, bps = Number(s.initialUnlockBps);
+    if (releasable > 0n) return ["Ready to release", "accent", (locked === 0n ? "Everything has unlocked." : now < cliffEnd ? `The rest unlocks ${linear ? "gradually from" : "on"} ${whenTime(cliffEnd)}.` : `The rest unlocks gradually until ${whenTime(end)}.`)];
+    if (locked === 0n) return ["Completed", "ok", s.revoked ? `Revoked on ${when(s.revokedAt)}. Everything vested has been released.` : `All ${hvx(s.total, false)} HVX has been released to this wallet.`];
+    // Nothing has unlocked yet: the first unlock is at start, or at cliff end when there is no initial unlock.
+    const first = bps > 0 ? s.start : cliffEnd, all = bps === 10000 || (!linear && (bps === 0 || cliffEnd === s.start));
+    if (now < first) return ["Locked", "", `${all ? "Unlocks" : bps ? `First unlock of ${bps / 100}%` : "Starts unlocking"} on ${whenTime(first)}, ${fromNow(first)}.`];
+    if (now < cliffEnd) return ["Locked", "", `Next unlock on ${whenTime(cliffEnd)}, ${fromNow(cliffEnd)}.`];
+    return ["Locked", "", `Unlocking gradually until ${whenTime(end)}.`];
+  }
   function renderLookup() {
-    $("lResult").hidden = !target; $("lShare").hidden = true;
+    $("lResult").hidden = !target; $("lHint").hidden = !!target; $("lShare").hidden = true;
     if (!target) return;
     if (!data) { $("lResult").innerHTML = `<div class="sched empty">${failing ? "Could not load data from the blockchain. The page retries every 15 seconds." : "Loading…"}</div>`; return; }
     // Ready to release first, then locked, then completed.
     const rank = (r) => r.releasable > 0n ? 0 : r.locked > 0n ? 1 : 2;
     const list = data.rows.filter((r) => r.s.beneficiary.toLowerCase() === target.toLowerCase()).sort((x, y) => rank(x) - rank(y)), who = `<span class="mono">${addr(target)}</span>`;
-    if (!list.length) { $("lResult").innerHTML = `<div class="sched empty">No HVX allocation is registered to ${who}. Check the address, or ask the HVX Foundation which wallet your allocation was registered to.</div>`; return; }
-    const sum = (f) => list.reduce((t, r) => t + f(r), 0n), stat = (k, w) => `<div><div class="k">${k}</div><div class="v">${hvx(w, false)}</div></div>`;
+    if (!list.length) { $("lResult").innerHTML = `<div class="sched empty">No HVX allocation found for ${who}. Check the address, or contact the HVX Foundation to confirm which wallet was registered.</div>`; return; }
+    const sum = (f) => list.reduce((t, r) => t + f(r), 0n), available = sum((r) => r.releasable);
+    const stat = (k, w, hl = false) => `<div${hl ? ' class="hl"' : ""}><div class="k">${k}</div><div class="v">${hvx(w, false)}</div></div>`;
+    const fact = (k, v) => `<div><dt>${k}</dt><dd>${v}</dd></div>`;
     const a = document.activeElement, keep = $("lResult").contains(a) ? a.dataset.release : null;
-    $("lResult").innerHTML = `<div class="stats">${stat("Total allocated HVX", sum((r) => r.s.total))}${stat("Currently locked HVX", sum((r) => r.locked))}${stat("Available to release HVX", sum((r) => r.releasable))}</div>`
+    $("lResult").innerHTML = `<div class="stats">${stat("Total allocated HVX", sum((r) => r.s.total))}${stat("Currently locked HVX", sum((r) => r.locked))}${stat("Available to release HVX", available, available > 0n)}</div>`
       + list.map((r) => {
         const { i, s, releasable, end } = r, [st, cls, why] = lookupStatus(r, data.now), label = esc(s.label);
         return `<div class="sched">
           <div class="shead"><div><b>${label}</b><span class="chip ${cls}">${st}</span></div>${releasable > 0n ? `<button class="small accent" data-release="${i}" data-label="${label}">Release ${hvx(releasable, false)} HVX</button>` : ""}</div>
-          <table>
-            <tr><td>Status</td><td>${why}</td></tr>
-            <tr><td>Vesting start</td><td>${whenTime(s.start)}</td></tr>
-            <tr><td>Vesting end</td><td>${whenTime(end)}</td></tr>
-            <tr><td>Terms</td><td>${termsOf(s, end).join(" · ")}</td></tr>
-            <tr><td>Released so far</td><td>${hvx(s.released, false)} HVX</td></tr>
-          </table>
+          <p class="why">${why}</p>
+          <dl class="facts">${fact("Vesting start", whenTime(s.start))}${fact("Vesting end", whenTime(end))}${fact("Unlock terms", unlockTerms(s))}${fact("Released so far", hvx(s.released, false) + " HVX")}</dl>
         </div>`;
       }).join("")
-      + `<div class="note">Read live from the vesting vault ${addr(C.vault)} on ${C.chainName}, schedule ${list.map((r) => "#" + r.i).join(", ")} · <a href="${C.explorer}/address/${C.vault}#readContract" target="_blank" rel="noopener">verify on BscScan</a>. Anyone can press Release: the HVX always goes to ${who}, and the wallet that presses it pays the network fee.</div>`;
+      + (available > 0n ? `<div class="note">Release sends the HVX to ${who}, whichever wallet you connect. The connected wallet pays a small ${C.chainId === 56 ? "BNB" : "tBNB"} network fee.</div>` : "")
+      + `<div class="note">Read live from the HVX vesting contract on ${C.chainName} · <a href="${C.explorer}/address/${C.vault}#readContract" target="_blank" rel="noopener">Verify on BscScan</a> (schedule ${list.map((r) => "#" + r.i).join(", ")})</div>`;
     $("lShare").hidden = false; $("lLink").value = location.origin + location.pathname + "?address=" + target;
     if (keep) $("lResult").querySelector(`[data-release="${keep}"]`)?.focus();
   }
