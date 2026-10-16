@@ -98,6 +98,10 @@
   .facts dt { font-size: var(--fs-sm); color: var(--muted); }
   .facts dd { margin: 2px 0 0; }
   .lfield > div:first-child { flex: 1 1 0; min-width: 0; }
+  .lfield input, .lfield button { height: 40px; }
+  .iconbtn { display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; border: 1px solid var(--line); border-radius: 10px; color: var(--ink); }
+  .iconbtn:hover { background: var(--bg); }
+  .iconbtn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   .share { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--line); }
   .legend i { display: inline-block; width: 10px; height: 6px; border-radius: 999px; margin-right: 5px; vertical-align: middle; }
   /* misc */
@@ -159,6 +163,7 @@
       <form class="field lfield" id="lForm">
         <div><label for="lAddr">Wallet address</label><input id="lAddr" class="mono" placeholder="0x…" autocomplete="off" spellcheck="false"></div>
         <div class="btn"><button>Check</button></div>
+        <div class="btn" id="lScanWrap" hidden><a class="iconbtn" id="lScan" target="_blank" rel="noopener" title="View wallet on BscScan" aria-label="View wallet on BscScan"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg></a></div>
       </form>
       <div class="note" id="lHint">Enter a wallet address to see its HVX allocation and lock-up dates. No wallet connection needed.</div>
       <div id="lResult" hidden></div>
@@ -418,7 +423,7 @@
     return ["Locked", "", `Unlocking gradually until ${whenTime(end)}.`];
   }
   function renderLookup() {
-    $("lResult").hidden = !target; $("lHint").hidden = !!target; $("lShare").hidden = true;
+    $("lResult").hidden = !target; $("lHint").hidden = !!target; $("lShare").hidden = true; $("lScanWrap").hidden = true;
     if (!target) return;
     if (!data) { $("lResult").innerHTML = `<div class="sched empty">${failing ? "Could not load data from the blockchain. The page retries every 15 seconds." : "Loading…"}</div>`; return; }
     // Ready to release first, then locked, then completed.
@@ -441,6 +446,8 @@
       + (available > 0n ? `<div class="note">Release sends the HVX to ${who}, whichever wallet you connect. The connected wallet pays a small ${C.chainId === 56 ? "BNB" : "tBNB"} network fee.</div>` : "")
       + `<div class="note">Read live from the HVX vesting contract on ${C.chainName} · <a href="${C.explorer}/address/${C.vault}#readContract" target="_blank" rel="noopener">Verify on BscScan</a> (schedule ${list.map((r) => "#" + r.i).join(", ")})</div>`;
     $("lShare").hidden = false; $("lLink").value = location.origin + location.pathname + "?address=" + target;
+    // Explorer shortcut only for a wallet that has an allocation in the vault.
+    $("lScanWrap").hidden = false; $("lScan").href = `${C.explorer}/address/${target}`;
     if (keep) $("lResult").querySelector(`[data-release="${keep}"]`)?.focus();
   }
   function lookup(value) {
