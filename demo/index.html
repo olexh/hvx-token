@@ -323,7 +323,12 @@
   document.addEventListener("click", async (e) => {
     const p = e.target.closest("[data-panel]"); if (p) { for (const el of document.querySelectorAll(".panel")) el.classList.toggle("open", el.id === "p-" + p.dataset.panel && !el.classList.contains("open")); return; }
     if (e.target.closest("[data-done]")) { showDone = !showDone; render(); return; }
-    const rel = e.target.closest("[data-release]"); if (rel) { if (!signer && !(await connect())) return; send("Release", () => vault.connect(signer).release(BigInt(rel.dataset.release)), `Released ${esc(rel.dataset.label)} tokens`); return; }
+    const rel = e.target.closest("[data-release]"); if (rel) {
+      if (!signer && !(await connect())) return;
+      // The contract lets anyone release; the buyer page only lets the beneficiary's own wallet do it.
+      const owner = data.rows.find((x) => String(x.i) === rel.dataset.release)?.s.beneficiary;
+      if (!ADMIN && owner?.toLowerCase() !== me.toLowerCase()) return toast(`Only the wallet that owns this allocation${owner ? ` (${short(owner)})` : ""} can release it. Switch to that wallet and try again.`, "bad");
+      send("Release", () => vault.connect(signer).release(BigInt(rel.dataset.release)), `Released ${esc(rel.dataset.label)} tokens`); return; }
     const r = e.target.closest("[data-row]"); if (r) { const id = r.dataset.row, on = !open.has(id); on ? open.add(id) : open.delete(id); $("d-" + id).classList.toggle("open", on); r.querySelector(".name").setAttribute("aria-expanded", on); }
   });
 
@@ -388,7 +393,7 @@
     </div>
     <div class="rowd${isOpen ? " open" : ""}" id="d-${i}">
       <div class="wide">${why}</div>
-      <div>Beneficiary <b>${addr(s.beneficiary)}</b> · <a href="?address=${s.beneficiary}#lookup">view allocation</a></div>
+      <div>Beneficiary <b>${addr(s.beneficiary)}</b>${isDeal(s) ? ` · <a href="?address=${s.beneficiary}#lookup">buyer page</a>` : ""}</div>
       <div>Released <b>${hvx(s.released)}</b> · still locked <b>${hvx(locked)}</b></div>
       ${terms.map((t) => `<div>${t}</div>`).join("")}
       <div>${s.revocable ? "Foundation <b>can revoke</b> the unvested part" : "<b>Cannot</b> be revoked"}</div>
@@ -434,7 +439,7 @@
     if (!data) { $("lResult").innerHTML = `<div class="sched empty">${failing ? "Could not load data from the blockchain. The page retries every 15 seconds." : "Loading…"}</div>`; return; }
     // Ready to release first, then locked, then completed.
     const rank = (r) => r.releasable > 0n ? 0 : r.locked > 0n ? 1 : 2;
-    const list = data.rows.filter((r) => r.s.beneficiary.toLowerCase() === target.toLowerCase()).sort((x, y) => rank(x) - rank(y)), who = `<span class="mono">${addr(target)}</span>`;
+    const list = data.rows.filter((r) => r.s.beneficiary.toLowerCase() === target.toLowerCase() && (ADMIN || isDeal(r.s))).sort((x, y) => rank(x) - rank(y)), who = `<span class="mono">${addr(target)}</span>`;
     if (!list.length) { $("lResult").innerHTML = `<div class="sched empty">No HVX allocation found for ${who}. Check the address, or contact the HVX Foundation to confirm which wallet was registered.</div>`; return; }
     const sum = (f) => list.reduce((t, r) => t + f(r), 0n), available = sum((r) => r.releasable);
     const stat = (k, w, hl = false) => `<div${hl ? ' class="hl"' : ""}><div class="k">${k}</div><div class="v" style="--n:${full.format(num(w)).length}">${hvx(w, false)}</div></div>`;
@@ -444,12 +449,14 @@
       + list.map((r) => {
         const { i, s, releasable, end } = r, [st, cls, why] = lookupStatus(r, data.now), label = esc(s.label);
         return `<div class="sched">
-          <div class="shead"><div><b>${label}</b><span class="chip ${cls}">${st}</span></div>${releasable > 0n ? `<button class="small accent" data-release="${i}" data-label="${label}">Release ${hvx(releasable, false)} HVX</button>` : ""}</div>
+          <div class="shead"><div><b>${label}</b><span class="chip ${cls}">${st}</span></div>${releasable > 0n ? `<button class="small accent" data-release="${i}" data-label="${label}"${!ADMIN && me && !isMine(s) ? ' disabled title="Only the wallet that owns this allocation can release it"' : ""}>Release ${hvx(releasable, false)} HVX</button>` : ""}</div>
           <p class="why">${why}</p>
           <dl class="facts">${fact("Vesting start", whenTime(s.start))}${fact("Vesting end", whenTime(end))}${fact("Unlock terms", unlockTerms(s))}${fact("Released so far", hvx(s.released, false) + " HVX")}</dl>
         </div>`;
       }).join("")
-      + (available > 0n ? `<div class="note">Release sends the HVX to ${who}, whichever wallet you connect. The connected wallet pays a small ${C.chainId === 56 ? "BNB" : "tBNB"} network fee.</div>` : "")
+      + (available > 0n ? `<div class="note">${ADMIN ? `Release sends the HVX to ${who}, whichever wallet you connect.`
+        : me && me.toLowerCase() !== target.toLowerCase() ? `The connected wallet ${addr(me)} does not own this allocation. Switch to ${who} in your wallet to release.`
+        : `To release, connect ${who}. Only the wallet that owns this allocation can release it here.`} The connected wallet pays a small ${C.chainId === 56 ? "BNB" : "tBNB"} network fee.</div>` : "")
       + `<div class="note">Read live from the HVX vesting contract on ${C.chainName} · <a href="${C.explorer}/address/${C.vault}#readContract" target="_blank" rel="noopener">Verify on BscScan</a> (schedule ${list.map((r) => "#" + r.i).join(", ")})</div>`;
     $("lShare").hidden = false; $("lLink").value = location.origin + location.pathname + "?address=" + target;
     // Explorer shortcut only for a wallet that has an allocation in the vault.
@@ -483,7 +490,7 @@
       const ids = [...Array(Number(count)).keys()];
       const reads = await multicall.aggregate3(ids.flatMap((i) => SCHEDULE_READS.map((fn) => ({ target: C.vault, allowFailure: false, callData: vault.interface.encodeFunctionData(fn, [i]) }))));
       const rows = ids.map((i) => { const [s, vested, releasable, locked, end] = SCHEDULE_READS.map((fn, j) => vault.interface.decodeFunctionResult(fn, reads[i * SCHEDULE_READS.length + j].returnData)[0]); return { i, s, vested, releasable, locked, end }; });
-      data = { rows, now }; render(); renderLookup();
+      data = { rows, now }; if (ADMIN) render(); renderLookup();
       $("updated").textContent = new Date().toLocaleTimeString(); $("stale").hidden = true; failing = false;
     } catch (e) {
       console.error(e);

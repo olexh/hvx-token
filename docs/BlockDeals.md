@@ -126,10 +126,11 @@ A schedule can't be changed or cancelled after execution.
 Open the dashboard at `https://olexh.github.io/hvx-token/?address=<buyer wallet>`. It shows the buyer's total
 allocation, locked and releasable HVX, vesting start and end dates and status (Locked, Ready to release or Completed),
 read live from the vault. No wallet connection is needed. Send this link to the buyer so they can check their
-allocation themselves. The buyer page shows only the allocation for the address entered.
+allocation themselves. The buyer page shows only block deal schedules for the address entered; Foundation, Team and
+other allocations never appear there.
 
 The full overview of all schedules is at `https://olexh.github.io/hvx-token/?view=admin`. Each schedule's
-details there have a **view allocation** link that opens the buyer's page, and that page's **Copy link** button gives
+details there have a **buyer page** link that opens the buyer's page, and that page's **Copy link** button gives
 the link to send.
 
 To check on BscScan instead, open the vault → Contract → Read Contract:
@@ -140,7 +141,8 @@ To check on BscScan instead, open the vault → Contract → Read Contract:
 
 ## Claiming after the unlock date
 
-Anyone can call `release(id)`, on the buyer's dashboard link or on BscScan (Write Contract). The tokens always go to
+On the buyer page, only the buyer's own connected wallet can release. The contract itself lets anyone call
+`release(id)`, for example on BscScan (Write Contract), and the tokens always go to
 the buyer's wallet; the wallet that sends the transaction pays the BNB network fee. Before the unlock date the call fails with `NothingToRelease`.
 
 ## Note
